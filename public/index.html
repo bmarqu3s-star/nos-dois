@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0F1713" id="tc">
+<meta name="theme-color" content="#2E7D4F" id="tc">
 <meta name="description" content="Diário a dois de filmes e restaurantes: notas, onde e quando, e os próximos programas.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -15,23 +15,22 @@
 <title>Nós Dois — Cinema & Mesa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" id="gf-lente">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" id="gf-caldeirao">
 <style>
 :root{
-  /* valores iniciais = tema 01 Lente; o JS troca todos ao aplicar um tema */
-  --bg:#0F1713;--surface:#17231C;--surface2:#1F3D2F;--ink:#F1ECE1;--muted:#A9B8AA;--line:#2B3A31;
-  --film:#7A2238;--onFilm:#F1ECE1;--filmT:#E58BA0;--food:#8CC57A;--onFood:#0F1713;--foodT:#8CC57A;
-  --gold:#D8DFC9;--onGold:#0F1713;--goldT:#D8DFC9;--danger:#F08A82;
-  --chrome:var(--surface);--chromeInk:var(--ink);--chromeMuted:var(--muted);--chromeLine:var(--line);--chromeAct:var(--surface2);
-  --hiBg:var(--surface);--hiInk:var(--ink);--hiB:1px solid var(--line);--hiSh:none;
-  --r:4px;--rb:4px;--rc:999px;--ri:6px;--pr:var(--r);--cardb:1px solid #2B3A31;--cardsh:0 8px 24px rgba(0,0,0,.3);
-  --emc:#8CC57A;--navOn:#8CC57A;--bdgBg:#0F1713;--bdgInk:#F1ECE1;
-  --tw:600;--tt:none;--ti:italic;--track:-.01em;--showT:#E8B84B;--onShow:#1B1405;
+  /* tema Caldeirão */
+  --bg:#FBF3DC;--surface:#FFF9E8;--surface2:#F0E4C4;--ink:#2A0F18;--muted:#6A4A52;--line:#E0CFA0;
+  --film:#6E1B33;--onFilm:#FBF3DC;--filmT:#6E1B33;--food:#2E7D4F;--onFood:#FBF3DC;--foodT:#1F6A3E;
+  --gold:#B9E3A0;--onGold:#2A0F18;--goldT:#1F6A3E;--danger:#B3261E;
+  --chrome:#2E7D4F;--chromeInk:#FBF3DC;--chromeMuted:#C6E6CC;--chromeLine:#1E5A38;--chromeAct:#1E5A38;
+  --hiBg:var(--surface);--hiInk:var(--ink);--hiB:2px solid #6E1B33;--hiSh:4px 4px 0 #6E1B33;
+  --r:14px;--rb:12px;--rc:999px;--ri:12px;--pr:var(--r);--cardb:2px solid #6E1B33;--cardsh:4px 4px 0 #6E1B33;
+  --emc:#6E1B33;--navOn:#FBF3DC;--bdgBg:#FBF3DC;--bdgInk:#6E1B33;
+  --tw:800;--tt:none;--ti:normal;--track:-.03em;--showT:#8A5A00;--onShow:#FFF7E0;
   --accent:var(--film);--accT:var(--filmT);--on:var(--onFilm);
-  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --serif:'Bricolage Grotesque',system-ui,sans-serif;
   --sans:'Manrope',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  color-scheme:dark;
+  color-scheme:light;
   box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px);
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -273,19 +272,6 @@ input[type=range]{width:100%;accent-color:var(--accT)}
 .out{margin-top:12px;font-size:14px;background:var(--surface2);border-radius:var(--r);padding:12px 14px}
 .out ul{margin:6px 0 0;padding-left:18px}
 .warn{background:color-mix(in srgb,var(--goldT) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--goldT) 38%,var(--line));border-radius:var(--r);padding:10px 14px;font-size:13.5px;margin-bottom:16px}
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
-.tcard{padding:0;border:2px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);text-align:left;cursor:pointer;display:flex;flex-direction:column;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
-.tcard:hover{transform:translateY(-2px)}
-.tcard[aria-pressed="true"]{border-color:var(--accT);box-shadow:0 0 0 2px var(--accT)}
-.tprev{padding:18px 16px;display:flex;flex-direction:column;gap:14px;min-height:122px;justify-content:space-between}
-.trow{display:flex;align-items:center;gap:12px}
-.twm{font-size:26px;line-height:1}
-.twm em{font-style:italic;font-weight:500;color:var(--emc)}
-.tsw{display:flex;gap:6px}
-.tsw i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(128,128,128,.45);display:block}
-.tmeta{padding:10px 14px 12px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted)}
-.tmeta b{color:var(--ink);font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.tmeta .on{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--accT)}
 
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:100;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:var(--cardsh);opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
 #toast.on{opacity:1}
@@ -377,22 +363,246 @@ button.pchip{cursor:pointer;min-height:32px}
 .fichad{margin:6px 0 14px;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface)}
 .fichad summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 .attr{font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.4}
-@media (prefers-reduced-motion:reduce){.card,.tcard{transition:none}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+.sync-pill{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--chromeAct);color:var(--chromeInk);border:1px solid var(--chromeLine);white-space:nowrap}
+.sync-pill[data-st="off"],.sync-pill[data-st="wait"]{opacity:.9}
+.sync-pill[data-st="err"]{background:var(--danger);color:#fff;border-color:var(--danger)}
+
 </style>
 </head>
 <body data-sec="home">
 <aside class="side" id="side"></aside>
-<header class="top"><div class="brand" id="topBrand"></div><span class="sec" id="topSec"></span></header>
+<header class="top"><div class="brand" id="topBrand"></div><span id="syncBadge" class="sync-pill" hidden></span><span class="sec" id="topSec"></span></header>
 <main id="view"></main>
 <nav class="nav" id="nav" aria-label="Navegação"></nav>
 <button class="fab" id="fab" data-act="add" aria-label="Adicionar"></button>
-<div class="ov" id="modal" hidden></div>
-<div class="ov" id="dlg" hidden></div>
-<div class="ov" id="tmx" hidden></div>
-<div id="attv" hidden></div>
+<div class="ov" id="modal" role="dialog" aria-modal="true" hidden></div>
+<div class="ov" id="dlg" role="dialog" aria-modal="true" hidden></div>
+<div class="ov" id="tmx" role="dialog" aria-modal="true" hidden></div>
+<div id="attv" role="dialog" aria-modal="true" hidden></div>
 <div id="toast" role="status"></div>
 
 <script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+const safeUrl = u => {
+  const s = String(u || "").trim();
+  if (!s) return "";
+  try {
+    const parsed = new URL(s);
+    return (parsed.protocol === "https:" || parsed.protocol === "http:") ? parsed.href : "";
+  } catch (e) {
+    return "";
+  }
+};
+
+const hash = s => {
+  let h = 7;
+  for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h;
+};
+
+const fmt = n => (n % 1 ? n.toFixed(1) : String(n)).replace(".", ",");
+const pad = n => String(n).padStart(2, "0");
+const isoDate = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const todayStr = () => isoDate(new Date());
+const toDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const fmtDate = s => s ? toDate(s).toLocaleDateString("pt-BR") : "";
+const firstDir = d => d ? d.split(",")[0].trim() + (d.includes(",") ? " e outros" : "") : "";
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+
+function coupleAvg(ra, rb) {
+  return ra != null && rb != null ? Math.round(((ra + rb) / 2) * 100) / 100 : null;
+}
+
+function coupleSync(it) {
+  const m = coupleAvg(it.ra, it.rb);
+  if (m != null) it.rating = m;
+  return it;
+}
+
+const isWant = i => i.kind === "filme" && i.status === "quero" && !!(i.want || i.date);
+
+const KUI = { filme: "filmes", rest: "rest", show: "shows" };
+const KOF = { filmes: "filme", rest: "rest", shows: "show" };
+const KNAME = { filme: "Filme", rest: "Restaurante", show: "Evento" };
+const kc = i => i.kind === "filme" ? "film" : i.kind === "show" ? "show" : "rest";
+const kcs = i => i.kind === "rest" ? "r" : i.kind === "show" ? "s" : "";
+const kIcon = k => k === "filme" ? "film" : k === "show" ? "music" : "fork";
+const ETYPES = ["Festival", "Rave", "Show", "Balada", "Outro"];
+
+const costN = i => {
+  let s = String(i.cost || "").replace(/[^\d.,]/g, "");
+  if (!s) return 0;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+};
+
+const brl = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: n % 1 ? 2 : 0 });
+const dayDiff = d => Math.round((toDate(d) - toDate(todayStr())) / 864e5);
+const fmtRange = i => !i.date ? "" : i.dateEnd && i.dateEnd > i.date ? (i.date.slice(0, 7) === i.dateEnd.slice(0, 7) ? pad(toDate(i.date).getDate()) + "–" + fmtDate(i.dateEnd) : fmtDate(i.date) + " – " + fmtDate(i.dateEnd)) : fmtDate(i.date);
+const ticketTxt = t => t === "comprado" ? "ingresso ok" : t === "pendente" ? "falta ingresso" : "";
+
+const keyOf = (t, y) => norm(t) + "|" + (y || "");
+const stripHtml = s => s.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<[^>]+>/g, "").trim();
+
+function parseCSV(t) {
+  t = String(t || "").replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [], f = "", q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) {
+      if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; row.push(f); f = ""; rows.push(row); row = []; }
+    else f += c;
+  }
+  if (f !== "" || row.length) { row.push(f); rows.push(row); }
+  if (!rows.length) return [];
+  const h = rows.shift().map(x => x.trim().toLowerCase());
+  return rows.filter(r => r.some(x => x !== "")).map(r => {
+    const o = {};
+    h.forEach((k, i) => { o[k] = (r[i] || "").trim(); });
+    return o;
+  });
+}
+
+const priceN = p => (String(p || "").match(/\$/g) || []).length;
+
+const OH_D = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const OH_PT = { seg: "Mo", segunda: "Mo", ter: "Tu", terca: "Tu", qua: "We", quarta: "We", qui: "Th", quinta: "Th", sex: "Fr", sexta: "Fr", sab: "Sa", sabado: "Sa", dom: "Su", domingo: "Su" };
+
+function ohNorm(raw) {
+  let s = String(raw || "").trim();
+  if (!s) return "";
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[–—]/g, "-");
+  s = s.replace(/\b(segunda|terca|quarta|quinta|sexta|sabado|domingo|seg|ter|qua|qui|sex|sab|dom)\b/gi, m => OH_PT[m.toLowerCase()]);
+  s = s.replace(/\bfechado\b/gi, "off").replace(/\b24 ?h(oras)?\b/gi, "00:00-24:00").replace(/\b(\d{1,2})h(\d{2})?\b/gi, (m, h, mi) => pad(+h) + ":" + (mi || "00")).replace(/\bas\b/gi, "-").replace(/\be\b/gi, ",");
+  return s.replace(/\s*-\s*/g, "-").replace(/\s*,\s*/g, ",").trim();
+}
+
+function parseOH(raw) {
+  let s = ohNorm(raw);
+  if (!s) return null;
+  if (/^24\/7$/i.test(s)) s = "Mo-Su 00:00-24:00";
+  const days = Array(7).fill(null), idx = d => OH_D.indexOf(d);
+  let any = false;
+  for (let rule of s.split(/;|\n/)) {
+    rule = rule.trim();
+    if (!rule) continue;
+    if (/^PH\b/i.test(rule)) continue;
+    if (/PH|SH|sunrise|sunset|week|\[|\+|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i.test(rule)) return null;
+    const m = rule.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?,?)+)?\s*(.*)$/);
+    if (!m) return null;
+    const dp = (m[1] || "").replace(/,$/, ""), tp = (m[2] || "").trim();
+    let set = [];
+    if (!dp) set = [0, 1, 2, 3, 4, 5, 6];
+    else {
+      for (const seg of dp.split(",")) {
+        const r = seg.split("-"), a = idx(r[0]);
+        if (a < 0) return null;
+        if (r.length === 1) set.push(a);
+        else {
+          const b = idx(r[1]);
+          if (b < 0) return null;
+          let x = a;
+          for (let k = 0; k < 8; k++) { set.push(x); if (x === b) break; x = (x + 1) % 7; }
+        }
+      }
+    }
+    const iv = [];
+    if (!/^(off|closed)$/i.test(tp)) {
+      for (const t of tp.split(",")) {
+        const q = t.trim().match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/);
+        if (!q) return null;
+        const a = +q[1] * 60 + +q[2];
+        let b = +q[3] * 60 + +q[4];
+        if (b <= a) b += 1440;
+        iv.push([a, b]);
+      }
+    }
+    for (const d of set) days[d] = iv;
+    any = true;
+  }
+  return any ? days : null;
+}
+
+function ohState(raw, now = new Date()) {
+  const d = parseOH(raw);
+  if (!d) return { known: false };
+  const dow = now.getDay(), min = now.getHours() * 60 + now.getMinutes();
+  const hm = x => x === 1440 ? "24:00" : pad(Math.floor(x / 60) % 24) + ":" + pad(x % 60);
+  let open = false, until = null;
+  for (const [a, b] of (d[dow] || [])) if (min >= a && min < b) { open = true; until = b; }
+  for (const [a, b] of (d[(dow + 6) % 7] || [])) if (b > 1440 && min < b - 1440) { open = true; until = b - 1440; }
+  const today = (d[dow] || []), txt = today.length ? today.map(([a, b]) => hm(a) + "–" + hm(b > 1440 ? b - 1440 : b)).join(" e ") : "fechado hoje";
+  const nxt = !open && today.find(([a]) => a > min);
+  return { known: true, open, until: until != null ? hm(until) : "", today: txt, opens: nxt ? hm(nxt[0]) : "" };
+}
+
+const syHash = str => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+};
+const sigOf = it => syHash(JSON.stringify(it));
+const imgSig = d => d.length + ":" + syHash(d.slice(0, 64) + d.slice(-64));
+const syncable = i => !((i.imp || i.impOsm || i.src === "catalogo") && !i.edited && !i.want && i.status === "quero" && !i.date);
+const idKey = i => i.osm ? "osm|" + i.osm.id : i.kind + "|" + norm(i.title) + "|" + (i.kind === "filme" ? i.year : i.kind === "show" ? i.date : norm(i.where));
+
+function fillMissing(r, dup) {
+  const empty = v => v == null || v === "";
+  ["ra", "rb", "rating", "date", "where", "notes", "dishes", "price"].forEach(k => { if (empty(r[k]) && !empty(dup[k])) r[k] = dup[k]; });
+  if (dup.status === "visto" && r.status === "quero") r.status = "visto";
+  if ((dup.att || []).length) r.att = [...(r.att || []), ...dup.att.filter(x => !(r.att || []).some(y => y.id === x.id))];
+  return coupleSync(r);
+}
+
+const OSM_CUIS = { pizza: "Pizzaria", italian: "Italiana", pasta: "Italiana", japanese: "Japonesa", sushi: "Japonesa", ramen: "Japonesa", burger: "Hambúrguer", brazilian: "Brasileira", regional: "Brasileira", steak_house: "Churrascaria", barbecue: "Churrascaria", churrasco: "Churrascaria", grill: "Churrascaria", arab: "Árabe", lebanese: "Árabe", kebab: "Árabe", middle_eastern: "Árabe", french: "Francesa", mexican: "Mexicana", coffee_shop: "Café / Padaria", cafe: "Café / Padaria", bakery: "Café / Padaria", vegetarian: "Vegetariana", vegan: "Vegetariana", seafood: "Frutos do mar", fish: "Frutos do mar", ice_cream: "Sorveteria", dessert: "Sobremesas", chinese: "Chinesa", thai: "Tailandesa", german: "Alemã", portuguese: "Portuguesa", spanish: "Espanhola", indian: "Indiana", korean: "Coreana", peruvian: "Peruana", argentinian: "Argentina", sandwich: "Lanches", fast_food: "Fast-food", chicken: "Frango", international: "Internacional", contemporary: "Contemporânea", ukrainian: "Ucraniana", polish: "Polonesa", asian: "Asiática", juice: "Sucos", pub: "Pub", bar: "Bar", diner: "Lanchonete", buffet: "Self-service", pastel: "Pastelaria", crepe: "Crepes", salad: "Saladas", steak: "Carnes", pancake: "Panquecas", tea: "Chá", beer: "Cervejaria" };
+const OSM_DEF = { cafe: "Café / Padaria", fast_food: "Fast-food", bar: "Bar", pub: "Bar", biergarten: "Bar", ice_cream: "Sorveteria", food_court: "Praça de alimentação" };
+
+function osmCuisine(t) {
+  const list = [];
+  (t.cuisine || "").split(/[;,]/).map(x => x.trim().toLowerCase().replace(/\s+/g, "_")).filter(Boolean).forEach(x => {
+    const m = OSM_CUIS[x] || (x[0].toUpperCase() + x.slice(1).replace(/_/g, " "));
+    if (!list.includes(m)) list.push(m);
+  });
+  return list.length ? list.slice(0, 2).join(", ") : (OSM_DEF[t.amenity] || "");
+}
+
+function osmFlags(t) {
+  const y = k => /^(yes|only|required)$/.test(t[k] || ""), f = [];
+  if (y("diet:vegetarian")) f.push("Opção vegetariana");
+  if (y("diet:vegan")) f.push("Opção vegana");
+  if (y("diet:gluten_free")) f.push("Sem glúten");
+  if (y("diet:halal")) f.push("Halal");
+  if (y("outdoor_seating")) f.push("Área externa");
+  if (y("wheelchair")) f.push("Acessível");
+  if (y("delivery")) f.push("Delivery");
+  if (y("takeaway")) f.push("Para levar");
+  if (y("drive_through")) f.push("Drive-thru");
+  if (y("reservation")) f.push("Reserva");
+  if (/^(wlan|yes|wifi)$/.test(t.internet_access || "")) f.push("Wi-Fi");
+  if (y("air_conditioning")) f.push("Ar-condicionado");
+  if (y("live_music") || y("music:live")) f.push("Música ao vivo");
+  if (y("payment:credit_cards")) f.push("Cartão");
+  if (y("payment:pix")) f.push("Pix");
+  if (y("microbrewery") || y("brewery")) f.push("Cervejaria");
+  return f;
+}
+
+
+const CATALOG = [["2010s",1,"Parasite",2019,"Parasita","Bong Joon-ho","Suspense, Comédia, Drama"],["2010s",2,"Interstellar",2014,"Interestelar","Christopher Nolan","Ficção científica, Drama, Aventura"],["2010s",3,"Incendies",2010,"Incêndios","Denis Villeneuve","Drama, Mistério, Guerra"],["2010s",4,"Whiplash",2014,"Whiplash: Em Busca da Perfeição","Damien Chazelle","Drama, Música"],["2010s",5,"Portrait of a Lady on Fire",2019,"Retrato de uma Jovem em Chamas","Céline Sciamma","Drama, Romance"],["2010s",6,"Spider-Man: Into the Spider-Verse",2018,"Homem-Aranha no Aranhaverso","Bob Persichetti, Peter Ramsey, Rodney Rothman","Animação, Ação, Aventura"],["2010s",7,"The Handmaiden",2016,"A Criada","Park Chan-wook","Suspense, Romance, Drama"],["2010s",8,"An Elephant Sitting Still",2018,"Um Elefante Sentado Quieto","Hu Bo","Drama"],["2010s",9,"A Separation",2011,"A Separação","Asghar Farhadi","Drama"],["2010s",10,"It's Such a Beautiful Day",2012,"","Don Hertzfeldt","Animação, Ficção científica, Drama"],["2010s",11,"Django Unchained",2012,"Django Livre","Quentin Tarantino","Faroeste, Drama"],["2010s",12,"Prisoners",2013,"Os Suspeitos","Denis Villeneuve","Suspense, Crime, Drama"],["2010s",13,"Mommy",2014,"Mommy","Xavier Dolan","Drama"],["2010s",14,"Shoplifters",2018,"Assunto de Família","Hirokazu Kore-eda","Drama, Crime"],["2010s",16,"The Hunt",2012,"A Caça","Thomas Vinterberg","Drama"],["2010s",17,"Song of the Sea",2014,"A Canção do Oceano","Tomm Moore","Animação, Fantasia, Família"],["2010s",18,"The Tale of The Princess Kaguya",2013,"O Conto da Princesa Kaguya","Isao Takahata","Animação, Fantasia, Drama"],["2010s",21,"The Grand Budapest Hotel",2014,"O Grande Hotel Budapeste","Wes Anderson","Comédia, Aventura, Crime"],["2010s",23,"Poetry",2010,"Poesia","Lee Chang-dong","Drama, Mistério"],["2010s",24,"Amour",2012,"Amor","Michael Haneke","Drama, Romance"],["2010s",25,"Inception",2010,"A Origem","Christopher Nolan","Ficção científica, Ação, Suspense"],["2010s",26,"Your Name.",2016,"Seu Nome","Makoto Shinkai","Animação, Romance, Fantasia"],["2010s",27,"The Turin Horse",2011,"O Cavalo de Turim","Béla Tarr","Drama"],["2010s",28,"Embrace of the Serpent",2015,"O Abraço da Serpente","Ciro Guerra","Aventura, Drama"],["2010s",29,"Capernaum",2018,"Cafarnaum","Nadine Labaki","Drama"],["2010s",31,"Winter Sleep",2014,"Sono de Inverno","Nuri Bilge Ceylan","Drama"],["2010s",32,"A Silent Voice: The Movie",2016,"A Voz do Silêncio","Naoko Yamada","Animação, Drama"],["2010s",33,"A Taxi Driver",2017,"O Motorista de Táxi","Jang Hoon","Drama, História, Ação"],["2010s",37,"Moonlight",2016,"Moonlight: Sob a Luz do Luar","Barry Jenkins","Drama"],["2010s",38,"My Life as a Zucchini",2016,"Minha Vida de Abobrinha","Claude Barras","Animação, Drama"],["2010s",39,"Klaus",2019,"Klaus","Sergio Pablos","Animação, Comédia, Família, Fantasia"],["2010s",42,"Shutter Island",2010,"Ilha do Medo","Martin Scorsese","Suspense, Mistério"],["2010s",43,"Like Father, Like Son",2013,"Pai e Filho","Hirokazu Kore-eda","Drama"],["2010s",44,"Little Women",2019,"Adoráveis Mulheres","Greta Gerwig","Drama, Romance"],["2010s",45,"Ernest & Celestine",2012,"Ernest e Celestine","Benjamin Renner, Vincent Patar, Stéphane Aubier","Animação, Família"],["2010s",46,"Güeros",2014,"","Alonso Ruizpalacios","Comédia, Drama"],["2010s",47,"Once Upon a Time in Anatolia",2011,"Era Uma Vez na Anatólia","Nuri Bilge Ceylan","Crime, Drama"],["2010s",48,"The Second Mother",2015,"Que Horas Ela Volta?","Anna Muylaert","Drama, Comédia"],["2010s",49,"Black Swan",2010,"Cisne Negro","Darren Aronofsky","Drama, Suspense, Terror"],["2010s",50,"Phantom Thread",2017,"Trama Fantasma","Paul Thomas Anderson","Drama, Romance"],["2010s",51,"Mad Max: Fury Road",2015,"Mad Max: Estrada da Fúria","George Miller","Ação, Ficção científica, Aventura"],["2010s",52,"12 Years a Slave",2013,"12 Anos de Escravidão","Steve McQueen","Drama, História"],["2010s",53,"Short Term 12",2013,"Temporário 12","Destin Daniel Cretton","Drama"],["2010s",55,"So Long, My Son",2019,"","Wang Xiaoshuai","Drama"],["2010s",56,"Pride",2014,"Orgulho e Esperança","Matthew Warchus","Comédia, Drama, História"],["2010s",57,"The Wolf House",2018,"A Casa Lobo","Joaquín Cociña, Cristóbal León","Animação, Terror"],["2010s",58,"The Intouchables",2011,"Intocáveis","Olivier Nakache, Éric Toledano","Comédia, Drama"],["2010s",59,"Mustang",2015,"Mustang","Deniz Gamze Ergüven","Drama"],["2010s",60,"I Dream in Another Language",2017,"","Ernesto Contreras","Drama"],["2010s",61,"Wild Tales",2014,"Relatos Selvagens","Damián Szifron","Comédia, Drama, Suspense"],["2010s",62,"How to Train Your Dragon",2010,"Como Treinar o Seu Dragão","Chris Sanders, Dean DeBlois","Animação, Fantasia, Aventura, Família"],["2010s",63,"Arrival",2016,"A Chegada","Denis Villeneuve","Ficção científica, Drama"],["2010s",64,"Get Out",2017,"Corra!","Jordan Peele","Terror, Mistério, Suspense"],["2010s",65,"Our Little Sister",2015,"Nossa Irmã Mais Nova","Hirokazu Kore-eda","Drama"],["2010s",67,"Sunny",2011,"","Kang Hyeong-cheol","Comédia, Drama"],["2010s",68,"Manchester by the Sea",2016,"Manchester à Beira-Mar","Kenneth Lonergan","Drama"],["2010s",69,"Coco",2017,"Viva: A Vida é uma Festa","Lee Unkrich, Adrian Molina","Animação, Família, Música, Fantasia"],["2010s",70,"Paddington 2",2017,"Paddington 2","Paul King","Comédia, Família, Aventura"],["2010s",71,"La La Land",2016,"La La Land: Cantando Estações","Damien Chazelle","Música, Romance, Comédia, Drama"],["2010s",72,"Wolf Children",2012,"","Mamoru Hosoda","Animação, Fantasia, Drama"],["2010s",73,"In This Corner of the World",2016,"Neste Canto do Mundo","Sunao Katabuchi","Animação, Drama, História"],["2010s",74,"Logan",2017,"Logan","James Mangold","Ação, Drama, Ficção científica"],["2010s",75,"The Wind Rises",2013,"Vidas ao Vento","Hayao Miyazaki","Animação, Drama, Romance"],["2010s",76,"Spotlight",2015,"Spotlight: Segredos Revelados","Tom McCarthy","Drama, Crime, História"],["2010s",77,"What We Do in the Shadows",2014,"O Que Fazemos nas Sombras","Jemaine Clement, Taika Waititi","Comédia, Terror"],["2010s",78,"1917",2019,"1917","Sam Mendes","Guerra, Drama, Ação"],["2010s",79,"Tangerines",2013,"Tangerinas","Zaza Urushadze","Drama, Guerra"],["2010s",80,"Masaan",2015,"","Neeraj Ghaywan","Drama"],["2010s",81,"The Great Beauty",2013,"A Grande Beleza","Paolo Sorrentino","Drama"],["2010s",82,"Blade Runner 2049",2017,"Blade Runner 2049","Denis Villeneuve","Ficção científica, Drama, Mistério"],["2010s",83,"The Florida Project",2017,"Projeto Flórida","Sean Baker","Drama"],["2010s",85,"And Then We Danced",2019,"","Levan Akin","Drama, Romance"],["2010s",86,"Sidewalls",2011,"Medianeras","Gustavo Taretto","Romance, Comédia, Drama"],["2010s",87,"The Breadwinner",2017,"A Ganha-Pão","Nora Twomey","Animação, Drama"],["2010s",88,"Oslo, August 31st",2011,"Oslo, 31 de Agosto","Joachim Trier","Drama"],["2010s",89,"Udaan",2010,"","Vikramaditya Motwane","Drama"],["2010s",90,"Roma",2018,"Roma","Alfonso Cuarón","Drama"],["2010s",91,"Invisible Life",2019,"A Vida Invisível","Karim Aïnouz","Drama"],["2010s",92,"Certified Copy",2010,"Cópia Fiel","Abbas Kiarostami","Drama, Romance"],["2010s",93,"A Bride for Rip Van Winkle",2016,"","Shunji Iwai","Drama"],["2010s",94,"Son of Saul",2015,"O Filho de Saul","László Nemes","Drama, Guerra, História"],["2010s",96,"The Lunchbox",2013,"Lunchbox","Ritesh Batra","Romance, Drama"],["2010s",98,"Corpus Christi",2019,"Corpus Christi","Jan Komasa","Drama"],["2010s",99,"Happy as Lazzaro",2018,"Lazzaro Feliz","Alice Rohrwacher","Drama, Fantasia"],["2010s",100,"About Time",2013,"Questão de Tempo","Richard Curtis","Romance, Comédia, Fantasia, Drama"],["2020s",1,"The Voice of Hind Rajab",2025,"A Voz de Hind Rajab","Kaouther Ben Hania","Drama, Guerra"],["2020s",2,"Spider-Man: Across the Spider-Verse",2023,"Homem-Aranha: Através do Aranhaverso","Joaquim Dos Santos, Kemp Powers, Justin K. Thompson","Animação, Ação, Aventura"],["2020s",4,"Dune: Part Two",2024,"Duna: Parte Dois","Denis Villeneuve","Ficção científica, Aventura, Drama"],["2020s",5,"How to Make Millions Before Grandma Dies",2024,"Como Ganhar Milhões antes que a Avó Morra","Pat Boonnitipat","Drama, Comédia"],["2020s",6,"Chainsaw Man – The Movie: Reze Arc",2025,"","Tatsuya Yoshihara","Animação, Ação, Fantasia"],["2020s",7,"Monster",2023,"Monster","Hirokazu Kore-eda","Drama, Mistério"],["2020s",8,"The Odyssey",2026,"A Odisseia","Christopher Nolan","Aventura, Fantasia, Ação"],["2020s",9,"I'm Still Here",2024,"Ainda Estou Aqui","Walter Salles","Drama, História"],["2020s",10,"Perfect Days",2023,"Dias Perfeitos","Wim Wenders","Drama"],["2020s",11,"Project Hail Mary",2026,"Projeto Ave Maria","Phil Lord, Christopher Miller","Ficção científica, Aventura"],["2020s",12,"Sing Sing",2023,"Sing Sing","Greg Kwedar","Drama"],["2020s",13,"The Father",2020,"Meu Pai","Florian Zeller","Drama"],["2020s",14,"Evangelion: 3.0+1.0 Thrice Upon a Time",2021,"","Hideaki Anno, Kazuya Tsurumaki, Mahiro Maeda, Katsuichi Nakayama","Animação, Ficção científica, Ação"],["2020s",15,"Look Back",2024,"","Kiyotaka Oshiyama","Animação, Drama"],["2020s",16,"The Holdovers",2023,"Os Rejeitados","Alexander Payne","Comédia, Drama"],["2020s",17,"I Swear",2025,"","Kirk Jones","Drama, Comédia"],["2020s",18,"The First Slam Dunk",2022,"","Takehiko Inoue","Animação, Drama"],["2020s",19,"Wolfwalkers",2020,"O Clã dos Lobos","Tomm Moore, Ross Stewart","Animação, Fantasia, Aventura"],["2020s",20,"Marcel the Shell with Shoes On",2021,"Marcel, a Concha de Sapatos","Dean Fleischer Camp","Animação, Comédia, Drama"],["2020s",21,"Quo Vadis, Aida?",2020,"","Jasmila Žbanić","Drama, Guerra, História"],["2020s",22,"Meiyazhagan",2024,"","C. Prem Kumar","Drama"],["2020s",23,"Everything Everywhere All at Once",2022,"Tudo em Todo o Lugar ao Mesmo Tempo","Daniel Kwan, Daniel Scheinert","Ficção científica, Ação, Comédia"],["2020s",26,"Aftersun",2022,"Aftersun","Charlotte Wells","Drama"],["2020s",27,"The Wild Robot",2024,"Robô Selvagem","Chris Sanders","Animação, Ficção científica, Família"],["2020s",28,"Drive My Car",2021,"Drive My Car","Ryusuke Hamaguchi","Drama"],["2020s",29,"Nirvanna the Band the Show the Movie",2025,"","Matt Johnson","Comédia, Aventura, Ficção científica"],["2020s",30,"RRR",2022,"RRR: Revolta, Rebelião, Revolução","S. S. Rajamouli","Ação, Drama, História"],["2020s",32,"Joyland",2022,"Joyland","Saim Sadiq","Drama, Romance"],["2020s",33,"Hamnet",2025,"Hamnet: A Vida Antes de Hamlet","Chloé Zhao","Drama, História"],["2020s",34,"All That's Left of You",2025,"","Cherien Dabis","Drama, História"],["2020s",35,"Blue Giant",2023,"","Yuzuru Tachikawa","Animação, Música, Drama"],["2020s",36,"Memoir of a Snail",2024,"Memórias de um Caracol","Adam Elliot","Animação, Comédia, Drama"],["2020s",38,"Society of the Snow",2023,"A Sociedade da Neve","J. A. Bayona","Drama, Aventura, História"],["2020s",39,"Past Lives",2023,"Vidas Passadas","Celine Song","Drama, Romance"],["2020s",40,"Oppenheimer",2023,"Oppenheimer","Christopher Nolan","Drama, História"],["2020s",41,"Riceboy Sleeps",2022,"","Anthony Shim","Drama"],["2020s",42,"12th Fail",2023,"","Vidhu Vinod Chopra","Drama"],["2020s",43,"My Father's Shadow",2025,"","Akinola Davies Jr.","Drama"],["2020s",44,"Sentimental Value",2025,"Valor Sentimental","Joachim Trier","Drama"],["2020s",45,"There's Still Tomorrow",2023,"Ainda Temos o Amanhã","Paola Cortellesi","Drama, Comédia"],["2020s",46,"All of a Sudden",2024,"","Ryusuke Hamaguchi","Drama"],["2020s",47,"Hundreds of Beavers",2022,"","Mike Cheslik","Comédia, Aventura"],["2020s",48,"Falling in Love Like in Movies",2025,"","Yandy Laurens","Romance, Comédia"],["2020s",50,"Close",2022,"Close","Lukas Dhont","Drama"],["2020s",51,"Puss in Boots: The Last Wish",2022,"Gato de Botas 2: O Último Pedido","Joel Crawford","Animação, Aventura, Comédia"],["2020s",52,"C'mon C'mon",2021,"","Mike Mills","Drama"],["2020s",53,"Ne Zha 2",2025,"","Yu Yang","Animação, Fantasia, Aventura"],["2020s",54,"Violet Evergarden: The Movie",2020,"Violet Evergarden: O Filme","Taichi Ishidate","Animação, Drama, Fantasia"],["2020s",58,"The Iron Claw",2023,"Garra de Ferro","Sean Durkin","Drama"],["2020s",60,"The Banshees of Inisherin",2022,"Os Banshees de Inisherin","Martin McDonagh","Drama, Comédia"],["2020s",61,"Anatomy of a Fall",2023,"Anatomia de uma Queda","Justine Triet","Drama, Mistério, Crime"],["2020s",62,"Souleymane's Story",2024,"","Boris Lojkine","Drama"],["2020s",65,"One Battle After Another",2025,"Uma Batalha Após a Outra","Paul Thomas Anderson","Ação, Crime, Drama"],["2020s",66,"Aattam",2023,"","Anand Ekarshi","Drama, Mistério"],["2020s",67,"Another Round",2020,"Druk – Mais Uma Rodada","Thomas Vinterberg","Drama, Comédia"],["2020s",68,"The Eight Mountains",2022,"","Felix van Groeningen, Charlotte Vandermeersch","Drama"],["2020s",70,"Flow",2024,"Flow","Gints Zilbalodis","Animação, Aventura, Fantasia"],["2020s",71,"The Quiet Girl",2022,"A Menina Silenciosa","Colm Bairéad","Drama"],["2020s",72,"All Quiet on the Western Front",2022,"Nada de Novo no Front","Edward Berger","Guerra, Drama, História"],["2020s",74,"Sinners",2025,"Pecadores","Ryan Coogler","Terror, Suspense, Música"],["2020s",75,"Petite Maman",2021,"","Céline Sciamma","Drama, Fantasia"],["2020s",76,"Mass",2021,"","Fran Kranz","Drama"],["2020s",77,"The Summit of the Gods",2021,"","Patrick Imbert","Animação, Aventura, Drama"],["2020s",78,"La Chimera",2023,"","Alice Rohrwacher","Drama, Aventura"],["2020s",79,"The Count of Monte Cristo",2024,"O Conde de Monte Cristo","Alexandre de La Patellière, Matthieu Delaporte","Aventura, Drama, História"],["2020s",80,"Robot Dreams",2023,"","Pablo Berger","Animação, Comédia, Drama"],["2020s",82,"Minari",2020,"Minari: Em Busca da Felicidade","Lee Isaac Chung","Drama"],["2020s",86,"Godzilla Minus One",2023,"","Takashi Yamazaki","Ação, Ficção científica, Drama"],["2020s",87,"No Other Choice",2025,"Sem Outra Escolha","Park Chan-wook","Comédia, Drama, Suspense"],["2020s",88,"Kneecap",2024,"","Rich Peppiatt","Comédia, Drama, Música"],["2020s",89,"The Worst Person in the World",2021,"A Pior Pessoa do Mundo","Joachim Trier","Drama, Comédia, Romance"],["2020s",92,"Train Dreams",2025,"Sonhos de Trem","Clint Bentley","Drama"],["2020s",94,"Wheel of Fortune and Fantasy",2021,"","Ryusuke Hamaguchi","Drama, Romance"],["2020s",97,"Sorry, Baby",2025,"","Eva Victor","Drama, Comédia"],["2020s",98,"Demon Slayer: Kimetsu no Yaiba Infinity Castle",2025,"Demon Slayer: Castelo Infinito","Haruo Sotozaki","Animação, Ação, Fantasia"],["2020s",99,"Latin Blood – The Ballad of Ney Matogrosso",2025,"Homem com H","Esmir Filho","Drama, Música"]];
+const GENRES = ["Ação", "Animação", "Aventura", "Comédia", "Crime", "Drama", "Família", "Fantasia", "Faroeste", "Ficção científica", "Guerra", "História", "Mistério", "Música", "Romance", "Suspense", "Terror"];
+
+
 "use strict";
 /* ---------- aparelho: detecta iPhone/Android/PWA e ajusta a altura do app ---------- */
 const DEV = (() => {
@@ -411,25 +621,13 @@ function fitApp() {
   const e = document.getElementById("devInfo"); if (e) e.textContent = DEV.info;
 }
 fitApp(); ["resize", "orientationchange", "pageshow"].forEach(ev => addEventListener(ev, () => setTimeout(fitApp, 60)));
-document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(fitApp, 60); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(fitApp, 60); else flushSave(); });
+addEventListener("pagehide", () => flushSave());
 if (window.visualViewport) visualViewport.addEventListener("resize", () => fitApp());
 
-/* ---------- utilidades ---------- */
+/* ---------- utilidades de DOM / ícones ---------- */
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
-const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
-const fmt = n => (n % 1 ? n.toFixed(1) : String(n)).replace(".", ",");
-const pad = n => String(n).padStart(2, "0");
-const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
-const toDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
-const fmtDate = s => s ? toDate(s).toLocaleDateString("pt-BR") : "";
-const firstDir = d => d ? d.split(",")[0].trim() + (d.includes(",") ? " e outros" : "") : "";
-const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
-/* nota de vocês dois = média das duas notas (só existe quando os dois avaliaram) */
-function coupleAvg(ra, rb) { return ra != null && rb != null ? Math.round(((ra + rb) / 2) * 100) / 100 : null; }
-function coupleSync(it) { const m = coupleAvg(it.ra, it.rb); if (m != null) it.rating = m; return it; }
 
 const IC = {
   home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
@@ -447,131 +645,34 @@ const IC = {
   doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
   share: '<path d="M12 3v12M8 7l4-4 4 4M5 13v7h14v-7"/>'
 };
-/* eventos (festivais, raves, shows) */
-const KUI = { filme: "filmes", rest: "rest", show: "shows" }, KOF = { filmes: "filme", rest: "rest", shows: "show" };
-const KNAME = { filme: "Filme", rest: "Restaurante", show: "Evento" };
-const kc = i => i.kind === "filme" ? "film" : i.kind === "show" ? "show" : "rest";
-const kcs = i => i.kind === "rest" ? "r" : i.kind === "show" ? "s" : "";
-const kIcon = k => k === "filme" ? "film" : k === "show" ? "music" : "fork";
-const ETYPES = ["Festival", "Rave", "Show", "Balada", "Outro"];
-const costN = i => {
-  let s = String(i.cost || "").replace(/[^\d.,]/g, ""); if (!s) return 0;
-  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
-  const n = parseFloat(s); return isNaN(n) ? 0 : n;
-};
-const brl = n => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: n % 1 ? 2 : 0 });
-const dayDiff = d => Math.round((toDate(d) - toDate(todayStr())) / 864e5);
-const fmtRange = i => !i.date ? "" : i.dateEnd && i.dateEnd > i.date ? (i.date.slice(0, 7) === i.dateEnd.slice(0, 7) ? pad(toDate(i.date).getDate()) + "–" + fmtDate(i.dateEnd) : fmtDate(i.date) + " – " + fmtDate(i.dateEnd)) : fmtDate(i.date);
-const ticketTxt = t => t === "comprado" ? "ingresso ok" : t === "pendente" ? "falta ingresso" : "";
 const ico = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
 
-/* ---------- temas (as 11 pranchas) ---------- */
-const F = {
-  CG: "Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600", MAN: "Manrope:wght@400;500;700",
-  FRA: "Fraunces:ital,wght@0,500;0,700;1,500;1,700", HAN: "Hanken+Grotesk:wght@400;500;700",
-  INS: "Instrument+Serif:ital@0;1", INSS: "Instrument+Sans:wght@400;500;700",
-  NEW: "Newsreader:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600", DMS: "DM+Sans:wght@400;500;700",
-  CIN: "Cinzel:wght@500;700", JOST: "Jost:wght@400;500;700", SYNE: "Syne:wght@600;800", SPG: "Space+Grotesk:wght@400;500;700",
-  BOD: "Bodoni+Moda:ital,wght@0,500;0,700;1,500", PLF: "Playfair+Display:ital,wght@0,500;0,700;1,500",
-  OSW: "Oswald:wght@400;600;700", BRI: "Bricolage+Grotesque:wght@500;800"
-};
+/* ---------- tema (Caldeirão) ---------- */
+const F = { MAN: "Manrope:wght@400;500;700", BRI: "Bricolage+Grotesque:wght@500;800" };
 const DEF = {
   chrome: "var(--surface)", chromeInk: "var(--ink)", chromeMuted: "var(--muted)", chromeLine: "var(--line)", chromeAct: "var(--surface2)",
   hiBg: "var(--surface)", hiInk: "var(--ink)", hiB: "1px solid var(--line)", hiSh: "none", pr: "var(--r)",
   cardsh: "none", tt: "none", ti: "italic", track: "-.01em", tw: "600"
 };
 const THEMES = [
-  { id: "lente", n: "01", name: "Lente", tag: "Escuro, elegante, verde e vinho", dark: true, moon: true, badge: "moonpill",
-    gf: [F.CG, F.MAN], serif: "'Cormorant Garamond', Georgia, serif", sans: "'Manrope', system-ui, sans-serif",
-    wm: "Nós <em>Dois</em>", wmcss: "font-weight:600",
-    gr: [["#5C1A2A", "#0F1713"], ["#1F3D2F", "#0F1713"], ["#3A5A48", "#0F1713"], ["#7A2B3D", "#1F3D2F"]],
-    v: { bg: "#0F1713", surface: "#17231C", surface2: "#1F3D2F", ink: "#F1ECE1", muted: "#A9B8AA", line: "#2B3A31", film: "#7A2238", onFilm: "#F1ECE1", filmT: "#E58BA0", food: "#8CC57A", onFood: "#0F1713", foodT: "#8CC57A", gold: "#D8DFC9", onGold: "#0F1713", goldT: "#D8DFC9", danger: "#F08A82", r: "4px", rb: "4px", rc: "999px", ri: "6px", cardb: "1px solid #2B3A31", cardsh: "0 8px 24px rgba(0,0,0,.3)", emc: "#8CC57A", navOn: "#8CC57A", bdgBg: "#0F1713", bdgInk: "#F1ECE1", tw: "600" } },
-  { id: "grimorio", n: "02", name: "Grimório", tag: "Livro de feitiços, claro e de papel", dark: false, badge: "stamp",
-    gf: [F.FRA, F.HAN], serif: "'Fraunces', Georgia, serif", sans: "'Hanken Grotesk', system-ui, sans-serif",
-    wm: "Nós Dois", wmcss: "font-weight:700;font-style:italic",
-    gr: [["#7A1F36", "#33091A"], ["#2F4A36", "#16241B"], ["#9A4A5C", "#4A1222"], ["#4A1222", "#2F4A36"]],
-    v: { bg: "#EFE6D6", surface: "#FBF5E9", surface2: "#E6DAC5", ink: "#2A0F18", muted: "#5A4A44", line: "#D4C6AE", film: "#7A1F36", onFilm: "#F3EADB", filmT: "#7A1F36", food: "#2F4A36", onFood: "#F3EADB", foodT: "#2F4A36", gold: "#4A1222", onGold: "#F3EADB", goldT: "#4A1222", danger: "#A12A2A", r: "2px", rb: "2px", rc: "2px", ri: "2px", cardb: "1px solid #4A1222", cardsh: "none", emc: "#7A1F36", navOn: "#7A1F36", bdgBg: "#FBF5E9", bdgInk: "#7A1F36", tw: "700" } },
-  { id: "eclipse", n: "03", name: "Eclipse", tag: "O mais minimalista: lua e um ponto", dark: true, moon: true, badge: "ring",
-    gf: [F.INS, F.INSS], serif: "'Instrument Serif', Georgia, serif", sans: "'Instrument Sans', system-ui, sans-serif",
-    wm: "Nós Dois", wmcss: "font-weight:400",
-    gr: [["#16281F", "#0B0F0D"], ["#2A1018", "#0B0F0D"], ["#1F2A24", "#0B0F0D"], ["#27402F", "#0B0F0D"]],
-    v: { bg: "#0B0F0D", surface: "#101815", surface2: "#16281F", ink: "#E8EFE4", muted: "#8FA08F", line: "#1F2A24", film: "#7A1F36", onFilm: "#E8EFE4", filmT: "#E08AA0", food: "#CFE3C8", onFood: "#0B0F0D", foodT: "#CFE3C8", gold: "#E8EFE4", onGold: "#0B0F0D", goldT: "#E8EFE4", danger: "#F08A82", r: "0", rb: "999px", rc: "999px", ri: "8px", cardb: "1px solid #1F2A24", cardsh: "none", emc: "#CFE3C8", navOn: "#E8EFE4", bdgBg: "rgba(11,15,13,.6)", bdgInk: "#E8EFE4", tw: "400", track: "-.02em" } },
-  { id: "nevoa", n: "04", name: "Névoa", tag: "Sálvia clara, traço fino", dark: false, moon: true, badge: "circle",
-    gf: [F.NEW, F.DMS], serif: "'Newsreader', Georgia, serif", sans: "'DM Sans', system-ui, sans-serif",
-    wm: "nós dois", wmcss: "font-weight:400;font-style:italic",
-    gr: [["#7FA086", "#5D8468"], ["#A8707E", "#7A3C4E"], ["#8DA683", "#5E7E66"], ["#6B8F7A", "#3F6552"]],
-    v: { bg: "#DDE5D3", surface: "#F4F1E8", surface2: "#CBD6C0", ink: "#17261D", muted: "#4D6354", line: "#B9C7B0", film: "#6B1D32", onFilm: "#F4F1E8", filmT: "#6B1D32", food: "#2E5A43", onFood: "#F4F1E8", foodT: "#2E5A43", gold: "#3E6B52", onGold: "#F4F1E8", goldT: "#2E5A43", danger: "#A12A2A", r: "14px", rb: "999px", rc: "999px", ri: "12px", cardb: "0", cardsh: "none", emc: "#6B1D32", navOn: "#2E5A43", bdgBg: "#F4F1E8", bdgInk: "#2E5A43", tw: "400", track: "-.02em" } },
-  { id: "pocao", n: "05", name: "Poção", tag: "Rótulo de boticário, vinho profundo", dark: true, badge: "seal",
-    gf: [F.CIN, F.JOST], serif: "'Cinzel', Georgia, serif", sans: "'Jost', system-ui, sans-serif",
-    wm: "NÓS DOIS", wmcss: "font-weight:500;letter-spacing:.14em;font-size:.8em",
-    gr: [["#8A2A44", "#2A0A14"], ["#3A5A48", "#1A2A20"], ["#6B2A3C", "#2A0A14"], ["#5A1E32", "#1C0710"]],
-    v: { bg: "#3F0F1D", surface: "#2A0A14", surface2: "#4A1626", ink: "#EFE5D2", muted: "#C9AFA6", line: "#6B2A3C", film: "#8A2A44", onFilm: "#EFE5D2", filmT: "#E8A5B5", food: "#B7D6A6", onFood: "#2A0A14", foodT: "#B7D6A6", gold: "#EFE5D2", onGold: "#3F0F1D", goldT: "#EFE5D2", danger: "#FF9A90", r: "0", rb: "0", rc: "0", ri: "0", cardb: "3px double #D9C3B8", cardsh: "none", emc: "#B7D6A6", navOn: "#B7D6A6", bdgBg: "#EFE5D2", bdgInk: "#3F0F1D", tw: "500", tt: "uppercase", ti: "normal", track: ".08em" } },
-  { id: "pulso", n: "06", name: "Pulso", tag: "Verde-ácido, vinho vivo, muito movimento", dark: true, badge: "acid",
-    gf: [F.SYNE, F.SPG], serif: "'Syne', system-ui, sans-serif", sans: "'Space Grotesk', system-ui, sans-serif",
-    wm: "NÓS DOIS", wmcss: "font-weight:800;letter-spacing:-.02em;font-size:.85em",
-    gr: [["#B3224F", "#0B0E0C"], ["#4C7A1E", "#0B0E0C"], ["#2A332D", "#0B0E0C"], ["#7A1838", "#0B0E0C"]],
-    v: { bg: "#0B0E0C", surface: "#141A16", surface2: "#1D2620", ink: "#F2F5EE", muted: "#9AA899", line: "#222A24", film: "#B3224F", onFilm: "#F2F5EE", filmT: "#F0668B", food: "#B7F25A", onFood: "#0B0E0C", foodT: "#B7F25A", gold: "#B7F25A", onGold: "#0B0E0C", goldT: "#B7F25A", danger: "#FF8A80", r: "16px", rb: "999px", rc: "999px", ri: "12px", cardb: "0", cardsh: "none", emc: "#B7F25A", navOn: "#B7F25A", bdgBg: "#B7F25A", bdgInk: "#0B0E0C", tw: "800", tt: "uppercase", ti: "normal", track: "-.02em" } },
-  { id: "arcano", n: "07", name: "Arcano II", tag: "Tarô: pôsteres em arco, floresta e lua", dark: true, badge: "arc",
-    gf: [F.BOD, F.JOST], serif: "'Bodoni Moda', Georgia, serif", sans: "'Jost', system-ui, sans-serif",
-    wm: "NÓS DOIS", wmcss: "font-weight:500;letter-spacing:.1em;font-size:.78em",
-    gr: [["#5C1A2A", "#14291F"], ["#2F4A3B", "#0F1F17"], ["#7A3A4A", "#14291F"], ["#3E5F4C", "#0F1F17"]],
-    v: { bg: "#14291F", surface: "#1B3528", surface2: "#0F1F17", ink: "#F1ECE1", muted: "#B3C4B6", line: "#2F4A3B", film: "#7A2A3E", onFilm: "#F1ECE1", filmT: "#E3C8CF", food: "#8CB89A", onFood: "#0F1F17", foodT: "#8CB89A", gold: "#E3C8CF", onGold: "#14291F", goldT: "#E3C8CF", danger: "#F4A09A", r: "0", rb: "0", rc: "0", ri: "0", pr: "999px 999px 0 0", cardb: "1px solid #E3C8CF", cardsh: "none", emc: "#E3C8CF", navOn: "#E3C8CF", bdgBg: "#14291F", bdgInk: "#F1ECE1", tw: "500", tt: "uppercase", ti: "italic", track: ".08em" } },
-  { id: "traco", n: "08", name: "Folha de um traço", tag: "Botânico, papel claro e fio fino", dark: false, badge: "under",
-    gf: [F.PLF, F.DMS], serif: "'Playfair Display', Georgia, serif", sans: "'DM Sans', system-ui, sans-serif",
-    wm: 'nós dois<span style="color:#6B1D32">.</span>', wmcss: "font-weight:500;font-style:italic",
-    gr: [["#5E8A6C", "#2F6B4B"], ["#9A5566", "#6B1D32"], ["#7A9A7E", "#3F5E48"], ["#6E7A6A", "#2F4A38"]],
-    v: { bg: "#F6F2E9", surface: "#FBF8F1", surface2: "#ECE6D8", ink: "#10170F", muted: "#4A5A4C", line: "#D9D2C3", film: "#6B1D32", onFilm: "#F6F2E9", filmT: "#6B1D32", food: "#2F6B4B", onFood: "#F6F2E9", foodT: "#2F6B4B", gold: "#2F6B4B", onGold: "#F6F2E9", goldT: "#2F6B4B", danger: "#A12A2A", r: "0", rb: "0", rc: "0", ri: "0", cardb: "0", cardsh: "none", emc: "#2F6B4B", navOn: "#2F6B4B", bdgBg: "transparent", bdgInk: "#FFFFFF", tw: "500", track: "-.02em" } },
-  { id: "sessao", n: "09", name: "Sessão", tag: "Cartaz de cinema, vinho de sala escura", dark: true, badge: "big",
-    gf: [F.OSW, F.HAN], serif: "'Oswald', Impact, sans-serif", sans: "'Hanken Grotesk', system-ui, sans-serif",
-    wm: "NÓS DOIS", wmcss: "font-weight:600;letter-spacing:.04em;font-size:.85em",
-    gr: [["#8A1F3A", "#12040A"], ["#2F5A3A", "#12040A"], ["#5A2A33", "#12040A"], ["#6A1830", "#12040A"]],
-    v: { bg: "#26080F", surface: "#1B060B", surface2: "#3A1019", ink: "#F3E9DA", muted: "#C2A9A5", line: "#4A1A26", film: "#8A1F3A", onFilm: "#F3E9DA", filmT: "#E58AA0", food: "#A3D18C", onFood: "#12040A", foodT: "#A3D18C", gold: "#F3E9DA", onGold: "#26080F", goldT: "#F3E9DA", danger: "#FF9A90", r: "0", rb: "0", rc: "0", ri: "0", cardb: "1px solid #4A1A26", cardsh: "none", emc: "#A3D18C", navOn: "#A3D18C", bdgBg: "transparent", bdgInk: "#FFFFFF", tw: "600", tt: "uppercase", ti: "normal", track: ".03em" } },
   { id: "caldeirao", n: "10", name: "Caldeirão", tag: "Adesivos, bordas grossas, a bruxa que ri", dark: false, badge: "sticker",
     gf: [F.BRI, F.MAN], serif: "'Bricolage Grotesque', system-ui, sans-serif", sans: "'Manrope', system-ui, sans-serif",
     wm: "Nós Dois", wmcss: "font-weight:800;letter-spacing:-.03em;text-shadow:2px 2px 0 #1E5A38",
     gr: [["#6E1B33", "#2E7D4F"], ["#2E7D4F", "#1E5A38"], ["#C9507A", "#6E1B33"], ["#3F9A64", "#1E5A38"]],
-    v: { bg: "#FBF3DC", surface: "#FFF9E8", surface2: "#F0E4C4", ink: "#2A0F18", muted: "#6A4A52", line: "#E0CFA0", film: "#6E1B33", onFilm: "#FBF3DC", filmT: "#6E1B33", food: "#2E7D4F", onFood: "#FBF3DC", foodT: "#1F6A3E", gold: "#B9E3A0", onGold: "#2A0F18", goldT: "#1F6A3E", danger: "#B3261E", chrome: "#2E7D4F", chromeInk: "#FBF3DC", chromeMuted: "#C6E6CC", chromeLine: "#1E5A38", chromeAct: "#1E5A38", r: "14px", rb: "12px", rc: "999px", ri: "12px", cardb: "2px solid #6E1B33", cardsh: "4px 4px 0 #6E1B33", hiB: "2px solid #6E1B33", hiSh: "4px 4px 0 #6E1B33", emc: "#6E1B33", navOn: "#FBF3DC", bdgBg: "#FBF3DC", bdgInk: "#6E1B33", tw: "800", ti: "normal", track: "-.03em" } },
-  { id: "lentecaldeirao", n: "11", name: "Lente no Caldeirão", tag: "A Lente com sombra dura e nota-figurinha", dark: true, moon: true, badge: "moonsticker",
-    gf: [F.CG, F.BRI], serif: "'Cormorant Garamond', Georgia, serif", sans: "'Bricolage Grotesque', system-ui, sans-serif",
-    wm: "Nós <em>Dois</em>", wmcss: "font-weight:600;text-shadow:2px 2px 0 #66192E",
-    gr: [["#66192E", "#0F1713"], ["#2E7D4F", "#0F1713"], ["#3A5A48", "#0F1713"], ["#7A2B3D", "#1F3D2F"]],
-    v: { bg: "#0F1713", surface: "#17231C", surface2: "#1F3D2F", ink: "#FBF3DC", muted: "#A9B8AA", line: "#2B3A31", film: "#66192E", onFilm: "#FBF3DC", filmT: "#E58BA0", food: "#B9E3A0", onFood: "#0F1713", foodT: "#B9E3A0", gold: "#8CC57A", onGold: "#0F1713", goldT: "#8CC57A", danger: "#F08A82", hiBg: "#FBF3DC", hiInk: "#0F1713", hiB: "2px solid #66192E", hiSh: "4px 4px 0 #66192E", r: "10px", rb: "12px", rc: "999px", ri: "12px", cardb: "2px solid #FBF3DC", cardsh: "4px 4px 0 #66192E", emc: "#B9E3A0", navOn: "#B9E3A0", bdgBg: "#FBF3DC", bdgInk: "#66192E", tw: "600", track: "-.01em" } }
+    v: { bg: "#FBF3DC", surface: "#FFF9E8", surface2: "#F0E4C4", ink: "#2A0F18", muted: "#6A4A52", line: "#E0CFA0", film: "#6E1B33", onFilm: "#FBF3DC", filmT: "#6E1B33", food: "#2E7D4F", onFood: "#FBF3DC", foodT: "#1F6A3E", gold: "#B9E3A0", onGold: "#2A0F18", goldT: "#1F6A3E", danger: "#B3261E", chrome: "#2E7D4F", chromeInk: "#FBF3DC", chromeMuted: "#C6E6CC", chromeLine: "#1E5A38", chromeAct: "#1E5A38", r: "14px", rb: "12px", rc: "999px", ri: "12px", cardb: "2px solid #6E1B33", cardsh: "4px 4px 0 #6E1B33", hiB: "2px solid #6E1B33", hiSh: "4px 4px 0 #6E1B33", emc: "#6E1B33", navOn: "#FBF3DC", bdgBg: "#FBF3DC", bdgInk: "#6E1B33", tw: "800", ti: "normal", track: "-.03em" } }
 ];
-let CUR = THEMES[0];
+const CUR = THEMES[0];
 
-/* símbolos (um por tema) */
 let SID = 0;
 const SYM = {
-  lente: () => { const i = "c" + (++SID); return { w: 210, h: 120, b: `<defs><clipPath id="${i}"><circle cx="75" cy="60" r="55"/></clipPath></defs><circle cx="75" cy="60" r="55" fill="#8CC57A"/><circle cx="135" cy="60" r="55" fill="#5C1A2A"/><circle cx="135" cy="60" r="55" fill="#D8DFC9" clip-path="url(#${i})"/>` }; },
-  grimorio: () => ({ w: 120, h: 150, b: '<rect x="8" y="4" width="104" height="142" rx="6" fill="#7A1F36"/><rect x="8" y="4" width="16" height="142" rx="6" fill="#33091A"/><rect x="34" y="14" width="68" height="122" fill="none" stroke="#F3EADB" stroke-width="1"/><path d="M68 42C94 62 94 88 68 108C42 88 42 62 68 42Z" fill="#F3EADB"/><circle cx="68" cy="75" r="4" fill="#4A1222"/>' }),
-  eclipse: () => { const i = "c" + (++SID); return { w: 160, h: 120, b: `<defs><mask id="${i}"><rect width="160" height="120" fill="#fff"/><circle cx="86" cy="50" r="44" fill="#000"/></mask></defs><circle cx="64" cy="60" r="46" fill="#CFE3C8" mask="url(#${i})"/><circle cx="128" cy="78" r="11" fill="#9B2A48"/>` }; },
-  nevoa: () => ({ w: 210, h: 120, b: '<circle cx="75" cy="60" r="52" fill="none" stroke="#2E5A43" stroke-width="3"/><circle cx="135" cy="60" r="52" fill="none" stroke="#6B1D32" stroke-width="3"/>' }),
-  pocao: () => ({ w: 160, h: 160, b: '<circle cx="80" cy="80" r="76" fill="none" stroke="#EFE5D2" stroke-width="2.5"/><circle cx="80" cy="80" r="68" fill="none" stroke="#EFE5D2" stroke-width="1"/><text x="80" y="96" text-anchor="middle" font-family="Cinzel, serif" font-size="46" font-weight="500" fill="#EFE5D2">N·D</text><path d="M62 44A20 20 0 1 0 98 44A15 15 0 1 1 62 44Z" fill="#B7D6A6"/>' }),
-  pulso: () => ({ w: 200, h: 120, b: '<circle cx="72" cy="60" r="42" fill="none" stroke="#B7F25A" stroke-width="16"/><circle cx="128" cy="60" r="42" fill="none" stroke="#D13A68" stroke-width="16"/>' }),
-  arcano: () => { const i = "c" + (++SID); return { w: 120, h: 170, b: `<defs><mask id="${i}"><rect width="120" height="170" fill="#fff"/><circle cx="68" cy="70" r="22" fill="#000"/></mask></defs><path d="M10 160V62A50 50 0 0 1 110 62V160Z" fill="none" stroke="#F1ECE1" stroke-width="3"/><path d="M20 150V64A40 40 0 0 1 100 64V150Z" fill="none" stroke="#F1ECE1" stroke-width="1"/><circle cx="58" cy="76" r="24" fill="#E3C8CF" mask="url(#${i})"/><text x="60" y="136" text-anchor="middle" font-family="Bodoni Moda, serif" font-size="26" fill="#F1ECE1">II</text>` }; },
-  traco: () => { const L = "M0 0C9-14 9-34 0-52C-9-34-9-14 0 0Z"; return { x: -120, y: -140, w: 240, h: 190, b: `<g fill="none" stroke="#2F6B4B" stroke-width="2.4" stroke-linejoin="round"><path d="${L}" transform="rotate(-78) scale(1.6,1.3)"/><path d="${L}" transform="rotate(78) scale(1.6,1.3)"/><path d="${L}" transform="rotate(-52) scale(1.9,1.75)"/><path d="${L}" transform="rotate(52) scale(1.9,1.75)"/><path d="${L}" transform="rotate(-26) scale(2.1,2.15)"/><path d="${L}" transform="rotate(26) scale(2.1,2.15)"/><path d="${L}" transform="scale(2.3,2.5)"/></g><circle cx="0" cy="10" r="8" fill="#6B1D32"/>` }; },
-  sessao: () => { let p = ""; for (let k = 0; k < 7; k++) p += `<rect x="${20 + k * 24}" y="16" width="10" height="8"/><rect x="${20 + k * 24}" y="116" width="10" height="8"/>`; return { w: 200, h: 140, b: `<rect x="8" y="8" width="184" height="124" fill="none" stroke="#F3E9DA" stroke-width="3"/><g fill="#F3E9DA">${p}</g><circle cx="84" cy="70" r="30" fill="none" stroke="#A3D18C" stroke-width="5"/><circle cx="116" cy="70" r="30" fill="none" stroke="#F3E9DA" stroke-width="5"/>` }; },
-  caldeirao: () => { const i = "c" + (++SID); return { w: 220, h: 140, b: `<defs><clipPath id="${i}"><circle cx="82" cy="70" r="52"/></clipPath></defs><circle cx="90" cy="78" r="52" fill="#143F27"/><circle cx="148" cy="78" r="52" fill="#143F27"/><circle cx="82" cy="70" r="52" fill="#FBF3DC" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#6E1B33" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#B9E3A0" stroke="#6E1B33" stroke-width="5" clip-path="url(#${i})"/>` }; },
-  lentecaldeirao: () => { const i = "c" + (++SID); return { w: 230, h: 150, b: `<defs><clipPath id="${i}"><circle cx="86" cy="72" r="54"/></clipPath></defs><circle cx="94" cy="80" r="54" fill="#66192E"/><circle cx="148" cy="80" r="54" fill="#66192E"/><circle cx="86" cy="72" r="54" fill="#8CC57A" stroke="#FBF3DC" stroke-width="5"/><circle cx="140" cy="72" r="54" fill="#66192E" stroke="#FBF3DC" stroke-width="5"/><circle cx="140" cy="72" r="54" fill="#B9E3A0" stroke="#FBF3DC" stroke-width="5" clip-path="url(#${i})"/>` }; }
+  caldeirao: () => { const i = "c" + (++SID); return { w: 220, h: 140, b: `<defs><clipPath id="${i}"><circle cx="82" cy="70" r="52"/></clipPath></defs><circle cx="90" cy="78" r="52" fill="#143F27"/><circle cx="148" cy="78" r="52" fill="#143F27"/><circle cx="82" cy="70" r="52" fill="#FBF3DC" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#6E1B33" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#B9E3A0" stroke="#6E1B33" stroke-width="5" clip-path="url(#${i})"/>` }; }
 };
 function symbol(id, h) {
-  const s = SYM[id](), w = Math.round(h * s.w / s.h);
+  const s = (SYM[id] || SYM.caldeirao)(), w = Math.round(h * s.w / s.h);
   return `<svg width="${w}" height="${h}" viewBox="${s.x || 0} ${s.y || 0} ${s.w} ${s.h}" role="img" aria-label="Símbolo Nós Dois">${s.b}</svg>`;
 }
 const brandHTML = (t, h) => `<span class="bsym">${symbol(t.id, h)}</span><span class="bwm" style="${t.wmcss}">${t.wm}</span>`;
 
-/* lua: a nota vira fase */
-function moonSVG(r, size = 18) {
-  let lit = "";
-  if (r != null) {
-    if (r >= 8) lit = '<circle cx="50" cy="50" r="42"/>';
-    else if (r >= 6) lit = '<path d="M50 8A42 42 0 0 1 50 92A23 42 0 0 1 50 8Z"/>';
-    else if (r >= 4) lit = '<path d="M50 8A42 42 0 0 1 50 92Z"/>';
-    else if (r >= 2) lit = '<path d="M50 8A42 42 0 0 1 50 92A15 42 0 0 0 50 8Z"/>';
-  }
-  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="7"/><g fill="currentColor">${lit}</g></svg>`;
-}
-const isWant = i => i.kind === "filme" && i.status === "quero" && !!(i.want || i.date);
 function wantBtn(i) {
   const on = isWant(i);
   return `<button type="button" class="wantbtn ${on ? "on" : ""}" data-act="want" data-id="${i.id}" aria-pressed="${on}" aria-label="${on ? "Tirar de Queremos ver" : "Salvar em Queremos ver"}" title="${on ? "Em Queremos ver (toque para tirar)" : "Salvar em Queremos ver"}">${ico("mark", 18)}</button>`;
@@ -579,33 +680,27 @@ function wantBtn(i) {
 function badgeHTML(i) {
   if (i.status !== "visto") return i.kind === "filme" ? wantBtn(i) : `<span class="badge wish">${ico("mark", 16)}</span>`;
   if (i.rating == null) return `<span class="badge none" title="Falta avaliar">?</span>`;
-  const k = CUR.badge, n = fmt(i.rating);
-  const moon = (k === "moonpill" || k === "moonsticker") ? moonSVG(i.rating, k === "moonpill" ? 15 : 14) : "";
-  return `<span class="badge b-${k}">${moon}<span>${n}</span>${k === "big" ? "<small>/10</small>" : ""}</span>`;
+  return `<span class="badge b-sticker"><span>${fmt(i.rating)}</span></span>`;
 }
 
-/* aplicar tema + fontes */
 const gfURL = l => "https://fonts.googleapis.com/css2?" + [...new Set(l)].map(f => "family=" + f).join("&") + "&display=swap";
 function loadFonts(key, list) {
   if (document.getElementById("gf-" + key)) return;
   const l = document.createElement("link"); l.id = "gf-" + key; l.rel = "stylesheet"; l.href = gfURL(list); document.head.appendChild(l);
 }
-const loadAllFonts = () => loadFonts("all", THEMES.flatMap(t => t.gf));
-function applyTheme(id, announce) {
-  const t = THEMES.find(x => x.id === id) || THEMES[0]; CUR = t;
-  const r = document.documentElement, v = { ...DEF, ...t.v, serif: t.serif, sans: t.sans };
+function applyTheme() {
+  const t = CUR, r = document.documentElement, v = { ...DEF, ...t.v, serif: t.serif, sans: t.sans };
   Object.keys(v).forEach(k => r.style.setProperty("--" + k, v[k]));
-  r.style.colorScheme = t.dark ? "dark" : "light";
-  r.style.setProperty("--showT", t.dark ? "#E8B84B" : "#8A5A00"); r.style.setProperty("--onShow", t.dark ? "#1B1405" : "#FFF7E0");
-  const tc = $("#tc"); if (tc) tc.setAttribute("content", t.v.chrome && t.v.chrome[0] === "#" ? t.v.chrome : t.v.bg);
+  r.style.colorScheme = "light";
+  r.style.setProperty("--showT", "#8A5A00"); r.style.setProperty("--onShow", "#FFF7E0");
+  const tc = $("#tc"); if (tc) tc.setAttribute("content", t.v.chrome || t.v.bg);
   loadFonts(t.id, t.gf);
-  S.theme = t.id; save();
+  S.theme = t.id;
   renderShell(); render();
-  if (announce) toast("Tema: " + t.name);
 }
 
 /* ---------- estado e armazenamento ---------- */
-let S = { v: 1, names: ["Eu", "Ela"], items: [], theme: "lente", catalogV: 0 };
+let S = { v: 1, names: ["Eu", "Ela"], items: [], theme: "caldeirao", catalogV: 0 };
 let TMDBKEY = "";
 const IMG = new Map();
 let db = null, storageOk = false;
@@ -630,15 +725,25 @@ async function dbWrite(store, fn) {
     await new Promise((res, rej) => { t.oncomplete = res; t.onerror = t.onabort = () => rej(t.error); });
   } catch (e) { storageOk = false; }
 }
-let saveTimer = null;
-function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => dbWrite("kv", s => s.put(JSON.parse(JSON.stringify(S)), "state")), 250); syncSoon(); }
+let saveTimer = null, savePending = false;
+function flushSave() {
+  if (!savePending) return;
+  clearTimeout(saveTimer); savePending = false;
+  dbWrite("kv", s => s.put(JSON.parse(JSON.stringify(S)), "state"));
+}
+function save() {
+  savePending = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 250);
+  syncSoon();
+}
 const setImg = (id, d) => { IMG.set(id, d); dbWrite("img", s => s.put(d, id)); syncSoon(); };
 const delImg = id => { IMG.delete(id); dbWrite("img", s => s.delete(id)); syncSoon(); };
 async function loadAll() {
   if (!(await openDB())) return;
   try {
     const st = await req2p(db.transaction("kv").objectStore("kv").get("state"));
-    if (st && Array.isArray(st.items)) S = { v: 1, names: st.names || ["Eu", "Ela"], items: st.items, theme: st.theme || "lente", catalogV: st.catalogV || 0, lastImp: st.lastImp || "", lastOsm: st.lastOsm || "" };
+    if (st && Array.isArray(st.items)) S = { v: 1, names: st.names || ["Eu", "Ela"], items: st.items, theme: "caldeirao", catalogV: st.catalogV || 0, lastImp: st.lastImp || "", lastOsm: st.lastOsm || "" };
     S.items.forEach(coupleSync);
     S.items.forEach(i => { if (i.kind === "filme" && i.status === "quero" && i.want === undefined) i.want = !((i.src === "catalogo" || i.imp) && !i.edited && !i.date); });
     TMDBKEY = (await req2p(db.transaction("kv").objectStore("kv").get("tmdbKey"))) || "";
@@ -649,8 +754,6 @@ async function loadAll() {
   attGC();
 }
 
-const CATALOG = [["2010s",1,"Parasite",2019,"Parasita","Bong Joon-ho","Suspense, Comédia, Drama"],["2010s",2,"Interstellar",2014,"Interestelar","Christopher Nolan","Ficção científica, Drama, Aventura"],["2010s",3,"Incendies",2010,"Incêndios","Denis Villeneuve","Drama, Mistério, Guerra"],["2010s",4,"Whiplash",2014,"Whiplash: Em Busca da Perfeição","Damien Chazelle","Drama, Música"],["2010s",5,"Portrait of a Lady on Fire",2019,"Retrato de uma Jovem em Chamas","Céline Sciamma","Drama, Romance"],["2010s",6,"Spider-Man: Into the Spider-Verse",2018,"Homem-Aranha no Aranhaverso","Bob Persichetti, Peter Ramsey, Rodney Rothman","Animação, Ação, Aventura"],["2010s",7,"The Handmaiden",2016,"A Criada","Park Chan-wook","Suspense, Romance, Drama"],["2010s",8,"An Elephant Sitting Still",2018,"Um Elefante Sentado Quieto","Hu Bo","Drama"],["2010s",9,"A Separation",2011,"A Separação","Asghar Farhadi","Drama"],["2010s",10,"It's Such a Beautiful Day",2012,"","Don Hertzfeldt","Animação, Ficção científica, Drama"],["2010s",11,"Django Unchained",2012,"Django Livre","Quentin Tarantino","Faroeste, Drama"],["2010s",12,"Prisoners",2013,"Os Suspeitos","Denis Villeneuve","Suspense, Crime, Drama"],["2010s",13,"Mommy",2014,"Mommy","Xavier Dolan","Drama"],["2010s",14,"Shoplifters",2018,"Assunto de Família","Hirokazu Kore-eda","Drama, Crime"],["2010s",16,"The Hunt",2012,"A Caça","Thomas Vinterberg","Drama"],["2010s",17,"Song of the Sea",2014,"A Canção do Oceano","Tomm Moore","Animação, Fantasia, Família"],["2010s",18,"The Tale of The Princess Kaguya",2013,"O Conto da Princesa Kaguya","Isao Takahata","Animação, Fantasia, Drama"],["2010s",21,"The Grand Budapest Hotel",2014,"O Grande Hotel Budapeste","Wes Anderson","Comédia, Aventura, Crime"],["2010s",23,"Poetry",2010,"Poesia","Lee Chang-dong","Drama, Mistério"],["2010s",24,"Amour",2012,"Amor","Michael Haneke","Drama, Romance"],["2010s",25,"Inception",2010,"A Origem","Christopher Nolan","Ficção científica, Ação, Suspense"],["2010s",26,"Your Name.",2016,"Seu Nome","Makoto Shinkai","Animação, Romance, Fantasia"],["2010s",27,"The Turin Horse",2011,"O Cavalo de Turim","Béla Tarr","Drama"],["2010s",28,"Embrace of the Serpent",2015,"O Abraço da Serpente","Ciro Guerra","Aventura, Drama"],["2010s",29,"Capernaum",2018,"Cafarnaum","Nadine Labaki","Drama"],["2010s",31,"Winter Sleep",2014,"Sono de Inverno","Nuri Bilge Ceylan","Drama"],["2010s",32,"A Silent Voice: The Movie",2016,"A Voz do Silêncio","Naoko Yamada","Animação, Drama"],["2010s",33,"A Taxi Driver",2017,"O Motorista de Táxi","Jang Hoon","Drama, História, Ação"],["2010s",37,"Moonlight",2016,"Moonlight: Sob a Luz do Luar","Barry Jenkins","Drama"],["2010s",38,"My Life as a Zucchini",2016,"Minha Vida de Abobrinha","Claude Barras","Animação, Drama"],["2010s",39,"Klaus",2019,"Klaus","Sergio Pablos","Animação, Comédia, Família, Fantasia"],["2010s",42,"Shutter Island",2010,"Ilha do Medo","Martin Scorsese","Suspense, Mistério"],["2010s",43,"Like Father, Like Son",2013,"Pai e Filho","Hirokazu Kore-eda","Drama"],["2010s",44,"Little Women",2019,"Adoráveis Mulheres","Greta Gerwig","Drama, Romance"],["2010s",45,"Ernest & Celestine",2012,"Ernest e Celestine","Benjamin Renner, Vincent Patar, Stéphane Aubier","Animação, Família"],["2010s",46,"Güeros",2014,"","Alonso Ruizpalacios","Comédia, Drama"],["2010s",47,"Once Upon a Time in Anatolia",2011,"Era Uma Vez na Anatólia","Nuri Bilge Ceylan","Crime, Drama"],["2010s",48,"The Second Mother",2015,"Que Horas Ela Volta?","Anna Muylaert","Drama, Comédia"],["2010s",49,"Black Swan",2010,"Cisne Negro","Darren Aronofsky","Drama, Suspense, Terror"],["2010s",50,"Phantom Thread",2017,"Trama Fantasma","Paul Thomas Anderson","Drama, Romance"],["2010s",51,"Mad Max: Fury Road",2015,"Mad Max: Estrada da Fúria","George Miller","Ação, Ficção científica, Aventura"],["2010s",52,"12 Years a Slave",2013,"12 Anos de Escravidão","Steve McQueen","Drama, História"],["2010s",53,"Short Term 12",2013,"Temporário 12","Destin Daniel Cretton","Drama"],["2010s",55,"So Long, My Son",2019,"","Wang Xiaoshuai","Drama"],["2010s",56,"Pride",2014,"Orgulho e Esperança","Matthew Warchus","Comédia, Drama, História"],["2010s",57,"The Wolf House",2018,"A Casa Lobo","Joaquín Cociña, Cristóbal León","Animação, Terror"],["2010s",58,"The Intouchables",2011,"Intocáveis","Olivier Nakache, Éric Toledano","Comédia, Drama"],["2010s",59,"Mustang",2015,"Mustang","Deniz Gamze Ergüven","Drama"],["2010s",60,"I Dream in Another Language",2017,"","Ernesto Contreras","Drama"],["2010s",61,"Wild Tales",2014,"Relatos Selvagens","Damián Szifron","Comédia, Drama, Suspense"],["2010s",62,"How to Train Your Dragon",2010,"Como Treinar o Seu Dragão","Chris Sanders, Dean DeBlois","Animação, Fantasia, Aventura, Família"],["2010s",63,"Arrival",2016,"A Chegada","Denis Villeneuve","Ficção científica, Drama"],["2010s",64,"Get Out",2017,"Corra!","Jordan Peele","Terror, Mistério, Suspense"],["2010s",65,"Our Little Sister",2015,"Nossa Irmã Mais Nova","Hirokazu Kore-eda","Drama"],["2010s",67,"Sunny",2011,"","Kang Hyeong-cheol","Comédia, Drama"],["2010s",68,"Manchester by the Sea",2016,"Manchester à Beira-Mar","Kenneth Lonergan","Drama"],["2010s",69,"Coco",2017,"Viva: A Vida é uma Festa","Lee Unkrich, Adrian Molina","Animação, Família, Música, Fantasia"],["2010s",70,"Paddington 2",2017,"Paddington 2","Paul King","Comédia, Família, Aventura"],["2010s",71,"La La Land",2016,"La La Land: Cantando Estações","Damien Chazelle","Música, Romance, Comédia, Drama"],["2010s",72,"Wolf Children",2012,"","Mamoru Hosoda","Animação, Fantasia, Drama"],["2010s",73,"In This Corner of the World",2016,"Neste Canto do Mundo","Sunao Katabuchi","Animação, Drama, História"],["2010s",74,"Logan",2017,"Logan","James Mangold","Ação, Drama, Ficção científica"],["2010s",75,"The Wind Rises",2013,"Vidas ao Vento","Hayao Miyazaki","Animação, Drama, Romance"],["2010s",76,"Spotlight",2015,"Spotlight: Segredos Revelados","Tom McCarthy","Drama, Crime, História"],["2010s",77,"What We Do in the Shadows",2014,"O Que Fazemos nas Sombras","Jemaine Clement, Taika Waititi","Comédia, Terror"],["2010s",78,"1917",2019,"1917","Sam Mendes","Guerra, Drama, Ação"],["2010s",79,"Tangerines",2013,"Tangerinas","Zaza Urushadze","Drama, Guerra"],["2010s",80,"Masaan",2015,"","Neeraj Ghaywan","Drama"],["2010s",81,"The Great Beauty",2013,"A Grande Beleza","Paolo Sorrentino","Drama"],["2010s",82,"Blade Runner 2049",2017,"Blade Runner 2049","Denis Villeneuve","Ficção científica, Drama, Mistério"],["2010s",83,"The Florida Project",2017,"Projeto Flórida","Sean Baker","Drama"],["2010s",85,"And Then We Danced",2019,"","Levan Akin","Drama, Romance"],["2010s",86,"Sidewalls",2011,"Medianeras","Gustavo Taretto","Romance, Comédia, Drama"],["2010s",87,"The Breadwinner",2017,"A Ganha-Pão","Nora Twomey","Animação, Drama"],["2010s",88,"Oslo, August 31st",2011,"Oslo, 31 de Agosto","Joachim Trier","Drama"],["2010s",89,"Udaan",2010,"","Vikramaditya Motwane","Drama"],["2010s",90,"Roma",2018,"Roma","Alfonso Cuarón","Drama"],["2010s",91,"Invisible Life",2019,"A Vida Invisível","Karim Aïnouz","Drama"],["2010s",92,"Certified Copy",2010,"Cópia Fiel","Abbas Kiarostami","Drama, Romance"],["2010s",93,"A Bride for Rip Van Winkle",2016,"","Shunji Iwai","Drama"],["2010s",94,"Son of Saul",2015,"O Filho de Saul","László Nemes","Drama, Guerra, História"],["2010s",96,"The Lunchbox",2013,"Lunchbox","Ritesh Batra","Romance, Drama"],["2010s",98,"Corpus Christi",2019,"Corpus Christi","Jan Komasa","Drama"],["2010s",99,"Happy as Lazzaro",2018,"Lazzaro Feliz","Alice Rohrwacher","Drama, Fantasia"],["2010s",100,"About Time",2013,"Questão de Tempo","Richard Curtis","Romance, Comédia, Fantasia, Drama"],["2020s",1,"The Voice of Hind Rajab",2025,"A Voz de Hind Rajab","Kaouther Ben Hania","Drama, Guerra"],["2020s",2,"Spider-Man: Across the Spider-Verse",2023,"Homem-Aranha: Através do Aranhaverso","Joaquim Dos Santos, Kemp Powers, Justin K. Thompson","Animação, Ação, Aventura"],["2020s",4,"Dune: Part Two",2024,"Duna: Parte Dois","Denis Villeneuve","Ficção científica, Aventura, Drama"],["2020s",5,"How to Make Millions Before Grandma Dies",2024,"Como Ganhar Milhões antes que a Avó Morra","Pat Boonnitipat","Drama, Comédia"],["2020s",6,"Chainsaw Man – The Movie: Reze Arc",2025,"","Tatsuya Yoshihara","Animação, Ação, Fantasia"],["2020s",7,"Monster",2023,"Monster","Hirokazu Kore-eda","Drama, Mistério"],["2020s",8,"The Odyssey",2026,"A Odisseia","Christopher Nolan","Aventura, Fantasia, Ação"],["2020s",9,"I'm Still Here",2024,"Ainda Estou Aqui","Walter Salles","Drama, História"],["2020s",10,"Perfect Days",2023,"Dias Perfeitos","Wim Wenders","Drama"],["2020s",11,"Project Hail Mary",2026,"Projeto Ave Maria","Phil Lord, Christopher Miller","Ficção científica, Aventura"],["2020s",12,"Sing Sing",2023,"Sing Sing","Greg Kwedar","Drama"],["2020s",13,"The Father",2020,"Meu Pai","Florian Zeller","Drama"],["2020s",14,"Evangelion: 3.0+1.0 Thrice Upon a Time",2021,"","Hideaki Anno, Kazuya Tsurumaki, Mahiro Maeda, Katsuichi Nakayama","Animação, Ficção científica, Ação"],["2020s",15,"Look Back",2024,"","Kiyotaka Oshiyama","Animação, Drama"],["2020s",16,"The Holdovers",2023,"Os Rejeitados","Alexander Payne","Comédia, Drama"],["2020s",17,"I Swear",2025,"","Kirk Jones","Drama, Comédia"],["2020s",18,"The First Slam Dunk",2022,"","Takehiko Inoue","Animação, Drama"],["2020s",19,"Wolfwalkers",2020,"O Clã dos Lobos","Tomm Moore, Ross Stewart","Animação, Fantasia, Aventura"],["2020s",20,"Marcel the Shell with Shoes On",2021,"Marcel, a Concha de Sapatos","Dean Fleischer Camp","Animação, Comédia, Drama"],["2020s",21,"Quo Vadis, Aida?",2020,"","Jasmila Žbanić","Drama, Guerra, História"],["2020s",22,"Meiyazhagan",2024,"","C. Prem Kumar","Drama"],["2020s",23,"Everything Everywhere All at Once",2022,"Tudo em Todo o Lugar ao Mesmo Tempo","Daniel Kwan, Daniel Scheinert","Ficção científica, Ação, Comédia"],["2020s",26,"Aftersun",2022,"Aftersun","Charlotte Wells","Drama"],["2020s",27,"The Wild Robot",2024,"Robô Selvagem","Chris Sanders","Animação, Ficção científica, Família"],["2020s",28,"Drive My Car",2021,"Drive My Car","Ryusuke Hamaguchi","Drama"],["2020s",29,"Nirvanna the Band the Show the Movie",2025,"","Matt Johnson","Comédia, Aventura, Ficção científica"],["2020s",30,"RRR",2022,"RRR: Revolta, Rebelião, Revolução","S. S. Rajamouli","Ação, Drama, História"],["2020s",32,"Joyland",2022,"Joyland","Saim Sadiq","Drama, Romance"],["2020s",33,"Hamnet",2025,"Hamnet: A Vida Antes de Hamlet","Chloé Zhao","Drama, História"],["2020s",34,"All That's Left of You",2025,"","Cherien Dabis","Drama, História"],["2020s",35,"Blue Giant",2023,"","Yuzuru Tachikawa","Animação, Música, Drama"],["2020s",36,"Memoir of a Snail",2024,"Memórias de um Caracol","Adam Elliot","Animação, Comédia, Drama"],["2020s",38,"Society of the Snow",2023,"A Sociedade da Neve","J. A. Bayona","Drama, Aventura, História"],["2020s",39,"Past Lives",2023,"Vidas Passadas","Celine Song","Drama, Romance"],["2020s",40,"Oppenheimer",2023,"Oppenheimer","Christopher Nolan","Drama, História"],["2020s",41,"Riceboy Sleeps",2022,"","Anthony Shim","Drama"],["2020s",42,"12th Fail",2023,"","Vidhu Vinod Chopra","Drama"],["2020s",43,"My Father's Shadow",2025,"","Akinola Davies Jr.","Drama"],["2020s",44,"Sentimental Value",2025,"Valor Sentimental","Joachim Trier","Drama"],["2020s",45,"There's Still Tomorrow",2023,"Ainda Temos o Amanhã","Paola Cortellesi","Drama, Comédia"],["2020s",46,"All of a Sudden",2024,"","Ryusuke Hamaguchi","Drama"],["2020s",47,"Hundreds of Beavers",2022,"","Mike Cheslik","Comédia, Aventura"],["2020s",48,"Falling in Love Like in Movies",2025,"","Yandy Laurens","Romance, Comédia"],["2020s",50,"Close",2022,"Close","Lukas Dhont","Drama"],["2020s",51,"Puss in Boots: The Last Wish",2022,"Gato de Botas 2: O Último Pedido","Joel Crawford","Animação, Aventura, Comédia"],["2020s",52,"C'mon C'mon",2021,"","Mike Mills","Drama"],["2020s",53,"Ne Zha 2",2025,"","Yu Yang","Animação, Fantasia, Aventura"],["2020s",54,"Violet Evergarden: The Movie",2020,"Violet Evergarden: O Filme","Taichi Ishidate","Animação, Drama, Fantasia"],["2020s",58,"The Iron Claw",2023,"Garra de Ferro","Sean Durkin","Drama"],["2020s",60,"The Banshees of Inisherin",2022,"Os Banshees de Inisherin","Martin McDonagh","Drama, Comédia"],["2020s",61,"Anatomy of a Fall",2023,"Anatomia de uma Queda","Justine Triet","Drama, Mistério, Crime"],["2020s",62,"Souleymane's Story",2024,"","Boris Lojkine","Drama"],["2020s",65,"One Battle After Another",2025,"Uma Batalha Após a Outra","Paul Thomas Anderson","Ação, Crime, Drama"],["2020s",66,"Aattam",2023,"","Anand Ekarshi","Drama, Mistério"],["2020s",67,"Another Round",2020,"Druk – Mais Uma Rodada","Thomas Vinterberg","Drama, Comédia"],["2020s",68,"The Eight Mountains",2022,"","Felix van Groeningen, Charlotte Vandermeersch","Drama"],["2020s",70,"Flow",2024,"Flow","Gints Zilbalodis","Animação, Aventura, Fantasia"],["2020s",71,"The Quiet Girl",2022,"A Menina Silenciosa","Colm Bairéad","Drama"],["2020s",72,"All Quiet on the Western Front",2022,"Nada de Novo no Front","Edward Berger","Guerra, Drama, História"],["2020s",74,"Sinners",2025,"Pecadores","Ryan Coogler","Terror, Suspense, Música"],["2020s",75,"Petite Maman",2021,"","Céline Sciamma","Drama, Fantasia"],["2020s",76,"Mass",2021,"","Fran Kranz","Drama"],["2020s",77,"The Summit of the Gods",2021,"","Patrick Imbert","Animação, Aventura, Drama"],["2020s",78,"La Chimera",2023,"","Alice Rohrwacher","Drama, Aventura"],["2020s",79,"The Count of Monte Cristo",2024,"O Conde de Monte Cristo","Alexandre de La Patellière, Matthieu Delaporte","Aventura, Drama, História"],["2020s",80,"Robot Dreams",2023,"","Pablo Berger","Animação, Comédia, Drama"],["2020s",82,"Minari",2020,"Minari: Em Busca da Felicidade","Lee Isaac Chung","Drama"],["2020s",86,"Godzilla Minus One",2023,"","Takashi Yamazaki","Ação, Ficção científica, Drama"],["2020s",87,"No Other Choice",2025,"Sem Outra Escolha","Park Chan-wook","Comédia, Drama, Suspense"],["2020s",88,"Kneecap",2024,"","Rich Peppiatt","Comédia, Drama, Música"],["2020s",89,"The Worst Person in the World",2021,"A Pior Pessoa do Mundo","Joachim Trier","Drama, Comédia, Romance"],["2020s",92,"Train Dreams",2025,"Sonhos de Trem","Clint Bentley","Drama"],["2020s",94,"Wheel of Fortune and Fantasy",2021,"","Ryusuke Hamaguchi","Drama, Romance"],["2020s",97,"Sorry, Baby",2025,"","Eva Victor","Drama, Comédia"],["2020s",98,"Demon Slayer: Kimetsu no Yaiba Infinity Castle",2025,"Demon Slayer: Castelo Infinito","Haruo Sotozaki","Animação, Ação, Fantasia"],["2020s",99,"Latin Blood – The Ballad of Ney Matogrosso",2025,"Homem com H","Esmir Filho","Drama, Música"]];
-const GENRES = ["Ação", "Animação", "Aventura", "Comédia", "Crime", "Drama", "Família", "Fantasia", "Faroeste", "Ficção científica", "Guerra", "História", "Mistério", "Música", "Romance", "Suspense", "Terror"];
 function loadCatalog() {
   const idx = new Map();
   S.items.filter(i => i.kind === "filme").forEach(i => { idx.set(keyOf(i.title, i.year), i); if (i.orig) idx.set(keyOf(i.orig, i.year), i); });
@@ -672,15 +775,40 @@ function newItem(kind, p = {}) {
   }, p);
 }
 
-/* ---------- UI helpers ---------- */
+/* ---------- UI helpers & acessibilidade ---------- */
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const prevFocus = new WeakMap();
+function saveFocus(ov) {
+  if (!ov) return;
+  const a = document.activeElement;
+  if (a && a !== document.body && !ov.contains(a)) prevFocus.set(ov, a);
+}
+function restoreFocus(ov) {
+  const f = prevFocus.get(ov);
+  prevFocus.delete(ov);
+  if (f && f.isConnected && typeof f.focus === "function") f.focus();
+}
+function trapTab(e, ov) {
+  if (e.key !== "Tab" || !ov || ov.hidden) return;
+  const els = [...ov.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null || el === document.activeElement);
+  if (!els.length) { e.preventDefault(); return; }
+  const first = els[0], last = els[els.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first || !ov.contains(document.activeElement)) { e.preventDefault(); last.focus(); }
+  } else if (document.activeElement === last || !ov.contains(document.activeElement)) {
+    e.preventDefault(); first.focus();
+  }
+}
 let toastT;
 function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
 function askConfirm(msg, ok = "Confirmar") {
   return new Promise(res => {
     const d = $("#dlg");
+    saveFocus(d);
     d.innerHTML = `<div class="sheet" style="max-width:420px"><h2 style="margin-bottom:10px">Tem certeza?</h2><p class="muted">${esc(msg)}</p><div class="acts"><span class="grow"></span><button class="btn" data-d="0">Cancelar</button><button class="btn" style="background:var(--danger);border-color:var(--danger);color:var(--bg)" data-d="1">${esc(ok)}</button></div></div>`;
     d.hidden = false;
-    d.onclick = e => { const b = e.target.closest("[data-d]"); if (b || e.target === d) { d.hidden = true; d.onclick = null; res(b && b.dataset.d === "1"); } };
+    setTimeout(() => d.querySelector('[data-d="0"]')?.focus(), 20);
+    d.onclick = e => { const b = e.target.closest("[data-d]"); if (b || e.target === d) { d.hidden = true; d.onclick = null; restoreFocus(d); res(b && b.dataset.d === "1"); } };
   });
 }
 function readFileDataURL(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
@@ -762,13 +890,18 @@ function openAtt(itemId, ty, aid) {
   const it = findIt(itemId); if (!it) return;
   const list = attMeta(it, ty); if (!list.length) return;
   AV = { it, list, i: Math.max(0, list.findIndex(a => a.id === aid)), z: 1 };
-  $("#attv").hidden = false; document.body.style.overflow = "hidden";
+  const v = $("#attv");
+  saveFocus(v);
+  v.hidden = false; document.body.style.overflow = "hidden";
   try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(l => { wakeL = l; }).catch(() => { }); } catch (e) { }
   drawAtt();
+  setTimeout(() => v.querySelector('[data-act="avclose"]')?.focus(), 20);
 }
 function closeAtt() {
-  $("#attv").hidden = true; AV = null; if (!ED) document.body.style.overflow = "";
+  const v = $("#attv");
+  v.hidden = true; AV = null; if (!ED) document.body.style.overflow = "";
   try { if (wakeL) wakeL.release(); } catch (e) { } wakeL = null;
+  restoreFocus(v);
 }
 async function drawAtt() {
   if (!AV) return;
@@ -860,7 +993,6 @@ function renderShell() {
 function go(sec, to) {
   ui.sec = sec;
   document.body.dataset.sec = sec;
-  if (sec === "ajustes") loadAllFonts();
   renderShell(); render();
   if (to) { const el = document.getElementById(to); if (el) { el.scrollIntoView(); return; } }
   window.scrollTo(0, 0); { const mv = $("#view"); if (mv) mv.scrollTop = 0; }
@@ -970,42 +1102,6 @@ function places() {
 }
 let _plMemo = null;
 const plCounts = () => _plMemo || (_plMemo = (() => { const c = new Map(); for (const i of S.items) if (i.kind === "rest" && i.status === "visto") { const k = plKey(i); c.set(k, (c.get(k) || 0) + 1); } return c; })());
-const priceN = p => (String(p || "").match(/\$/g) || []).length;
-/* horário de funcionamento: aceita o formato do OpenStreetMap ou texto simples (Seg-Sex 11:00-15:00, 18:00-23:00; Sáb-Dom 12:00-23:00) */
-const OH_D = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"], OH_PT = { seg: "Mo", segunda: "Mo", ter: "Tu", terca: "Tu", qua: "We", quarta: "We", qui: "Th", quinta: "Th", sex: "Fr", sexta: "Fr", sab: "Sa", sabado: "Sa", dom: "Su", domingo: "Su" };
-function ohNorm(raw) {
-  let s = String(raw || "").trim(); if (!s) return "";
-  s = s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[–—]/g, "-");
-  s = s.replace(/\b(segunda|terca|quarta|quinta|sexta|sabado|domingo|seg|ter|qua|qui|sex|sab|dom)\b/gi, m => OH_PT[m.toLowerCase()]);
-  s = s.replace(/\bfechado\b/gi, "off").replace(/\b24 ?h(oras)?\b/gi, "00:00-24:00").replace(/\b(\d{1,2})h(\d{2})?\b/gi, (m, h, mi) => pad(+h) + ":" + (mi || "00")).replace(/\bas\b/gi, "-").replace(/\be\b/gi, ",");
-  return s.replace(/\s*-\s*/g, "-").replace(/\s*,\s*/g, ",").trim();
-}
-function parseOH(raw) {
-  let s = ohNorm(raw); if (!s) return null; if (/^24\/7$/i.test(s)) s = "Mo-Su 00:00-24:00";
-  const days = Array(7).fill(null), idx = d => OH_D.indexOf(d); let any = false;
-  for (let rule of s.split(/;|\n/)) {
-    rule = rule.trim(); if (!rule) continue;
-    if (/^PH\b/i.test(rule)) continue;
-    if (/PH|SH|sunrise|sunset|week|\[|\+|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i.test(rule)) return null;
-    const m = rule.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?,?)+)?\s*(.*)$/), dp = (m[1] || "").replace(/,$/, ""), tp = (m[2] || "").trim();
-    let set = [];
-    if (!dp) set = [0, 1, 2, 3, 4, 5, 6]; else for (const seg of dp.split(",")) { const r = seg.split("-"), a = idx(r[0]); if (a < 0) return null; if (r.length === 1) set.push(a); else { const b = idx(r[1]); if (b < 0) return null; let x = a; for (let k = 0; k < 8; k++) { set.push(x); if (x === b) break; x = (x + 1) % 7; } } }
-    let iv = [];
-    if (!/^(off|closed)$/i.test(tp)) for (const t of tp.split(",")) { const q = t.trim().match(/^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$/); if (!q) return null; const a = +q[1] * 60 + +q[2]; let b = +q[3] * 60 + +q[4]; if (b <= a) b += 1440; iv.push([a, b]); }
-    for (const d of set) days[d] = iv; any = true;
-  }
-  return any ? days : null;
-}
-function ohState(raw, now = new Date()) {
-  const d = parseOH(raw); if (!d) return { known: false };
-  const dow = now.getDay(), min = now.getHours() * 60 + now.getMinutes(), hm = x => x === 1440 ? "24:00" : pad(Math.floor(x / 60) % 24) + ":" + pad(x % 60);
-  let open = false, until = null;
-  for (const [a, b] of (d[dow] || [])) if (min >= a && min < b) { open = true; until = b; }
-  for (const [a, b] of (d[(dow + 6) % 7] || [])) if (b > 1440 && min < b - 1440) { open = true; until = b - 1440; }
-  const today = (d[dow] || []), txt = today.length ? today.map(([a, b]) => hm(a) + "–" + hm(b > 1440 ? b - 1440 : b)).join(" e ") : "fechado hoje";
-  const nxt = !open && today.find(([a]) => a > min);
-  return { known: true, open, until: until != null ? hm(until) : "", today: txt, opens: nxt ? hm(nxt[0]) : "" };
-}
 function ohPill(p) {
   const o = ohState(p.hours); if (!o.known) return `<span class="pill na">horário não informado</span>`;
   return o.open ? `<span class="pill ok">aberto · até ${o.until}</span>` : `<span class="pill no">fechado${o.opens ? " · abre " + o.opens : ""}</span>`;
@@ -1109,16 +1205,18 @@ function restFilters(u) {
 /* ---------- sincronização do casal (Firebase: login Google + Firestore, plano Spark) ---------- */
 const FB_CFG = { apiKey: "AIzaSyCblqUFnvOyKc6QNV3LPspsxr99KTg4hKo", authDomain: "nos-dois-87ec5.firebaseapp.com", projectId: "nos-dois-87ec5", storageBucket: "nos-dois-87ec5.firebasestorage.app", messagingSenderId: "1005815658591", appId: "1:1005815658591:web:981685d8b505d2ba7f83ea" };
 const FB_V = "10.14.1";
-const SY = { F: null, app: null, auth: null, fs: null, user: null, uid: "", cid: null, couple: null, err: "", msg: "", busy: false, loading: null, unsub: [], sig: {}, isig: {}, aup: {}, namesSig: "", lastPull: 0, last: 0, code: "", invite: null, pendingInvite: "" };
-const syHash = str => { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
-const sigOf = it => syHash(JSON.stringify(it));
-const imgSig = d => d.length + ":" + syHash(d.slice(0, 64) + d.slice(-64));
-/* lugares/filmes importados em lote e ainda intocados não sobem: dá para refazer a importação em qualquer aparelho */
-const syncable = i => !((i.imp || i.impOsm || i.src === "catalogo") && !i.edited && !i.want && i.status === "quero" && !i.date);
-const idKey = i => i.osm ? "osm|" + i.osm.id : i.kind + "|" + norm(i.title) + "|" + (i.kind === "filme" ? i.year : i.kind === "show" ? i.date : norm(i.where));
-const syPersist = () => dbWrite("kv", s => s.put({ cid: SY.cid, uid: SY.uid, sig: SY.sig, isig: SY.isig, aup: SY.aup, lastPull: SY.lastPull, namesSig: SY.namesSig }, "sync"));
+const SY = { F: null, app: null, auth: null, fs: null, user: null, uid: "", cid: null, couple: null, err: "", msg: "", busy: false, loading: null, unsub: [], sig: {}, isig: {}, aup: {}, namesSig: "", lastPullItems: 0, lastPullImgs: 0, last: 0, code: "", invite: null, pendingInvite: "" };
+const syPersist = () => dbWrite("kv", s => s.put({ cid: SY.cid, uid: SY.uid, sig: SY.sig, isig: SY.isig, aup: SY.aup, lastPullItems: SY.lastPullItems, lastPullImgs: SY.lastPullImgs, namesSig: SY.namesSig }, "sync"));
 async function syLoadState() {
-  try { const v = db && await req2p(db.transaction("kv").objectStore("kv").get("sync")); if (v) { SY.cid = v.cid || null; SY.uid = v.uid || ""; SY.sig = v.sig || {}; SY.isig = v.isig || {}; SY.aup = v.aup || {}; SY.lastPull = v.lastPull || 0; SY.namesSig = v.namesSig || ""; } } catch (e) { }
+  try {
+    const v = db && await req2p(db.transaction("kv").objectStore("kv").get("sync"));
+    if (v) {
+      SY.cid = v.cid || null; SY.uid = v.uid || ""; SY.sig = v.sig || {}; SY.isig = v.isig || {}; SY.aup = v.aup || {};
+      SY.lastPullItems = v.lastPullItems ?? v.lastPull ?? 0;
+      SY.lastPullImgs = v.lastPullImgs ?? v.lastPull ?? 0;
+      SY.namesSig = v.namesSig || "";
+    }
+  } catch (e) { }
 }
 function syErr(e) {
   const c = (e && (e.code || "")) + "";
@@ -1129,7 +1227,20 @@ function syErr(e) {
   if (/unauthorized-domain/.test(c)) return "Este endereço não está autorizado no login do Firebase.";
   return (e && e.message) || "Erro de sincronização.";
 }
-function syUi() { const e = $("#syncCard"); if (e) e.outerHTML = syncCard(); }
+function updateSyncBadge() {
+  const b = $("#syncBadge");
+  if (!b) return;
+  if (!SY.cid) { b.hidden = true; return; }
+  const pending = S.items.some(it => syncable(it) && SY.sig[it.id] !== sigOf(it));
+  if (SY.busy) { b.hidden = false; b.textContent = "Sincronizando…"; b.dataset.st = "busy"; }
+  else if (!navigator.onLine) { b.hidden = false; b.textContent = pending ? "Offline · pendente" : "Offline"; b.dataset.st = "off"; }
+  else if (SY.err) { b.hidden = false; b.textContent = "Erro no sync"; b.dataset.st = "err"; }
+  else if (pending) { b.hidden = false; b.textContent = "Pendente…"; b.dataset.st = "wait"; }
+  else { b.hidden = true; b.dataset.st = ""; }
+}
+addEventListener("online", () => { if (SY.cid) syncSoon(500); updateSyncBadge(); });
+addEventListener("offline", () => updateSyncBadge());
+function syUi() { const e = $("#syncCard"); if (e) e.outerHTML = syncCard(); updateSyncBadge(); }
 function syRender() { clearTimeout(SY.rt); SY.rt = setTimeout(() => { renderShell(); if (!ED) render(); else syUi(); }, 300); }
 function syLoad() {
   if (SY.loading) return SY.loading;
@@ -1149,7 +1260,7 @@ function stopSync() { SY.unsub.forEach(f => { try { f(); } catch (e) { } }); SY.
 async function syAuth(user) {
   stopSync(); SY.user = user; SY.err = "";
   if (!user) { syUi(); return; }
-  if (SY.uid && SY.uid !== user.uid) { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPull = 0; SY.cid = null; SY.namesSig = ""; }
+  if (SY.uid && SY.uid !== user.uid) { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPullItems = 0; SY.lastPullImgs = 0; SY.cid = null; SY.namesSig = ""; }
   SY.uid = user.uid;
   try {
     const { doc, getDoc } = SY.F;
@@ -1167,23 +1278,17 @@ async function syStart(cid) {
   const bad = e => { SY.err = syErr(e); syUi(); };
   SY.unsub.push(onSnapshot(cref, s => { if (!s.exists()) return; SY.couple = s.data(); syNamesIn(); syUi(); }, bad));
   updateDoc(cref, { ["people." + SY.user.uid]: { n: SY.user.displayName || "", e: SY.user.email || "" } }).catch(() => { });
-  const since = Timestamp.fromMillis(Math.max(0, SY.lastPull - 60000));
-  SY.unsub.push(onSnapshot(query(collection(cref, "items"), where("u", ">", since)), syPullItems, bad));
-  SY.unsub.push(onSnapshot(query(collection(cref, "imgs"), where("u", ">", since)), syPullImgs, bad));
+  const sinceItems = Timestamp.fromMillis(Math.max(0, SY.lastPullItems - 60000));
+  const sinceImgs = Timestamp.fromMillis(Math.max(0, SY.lastPullImgs - 60000));
+  SY.unsub.push(onSnapshot(query(collection(cref, "items"), where("u", ">", sinceItems)), syPullItems, bad));
+  SY.unsub.push(onSnapshot(query(collection(cref, "imgs"), where("u", ">", sinceImgs)), syPullImgs, bad));
   syncSoon(1500);
 }
 const delImgLocal = id => { delete SY.isig[id]; IMG.delete(id); dbWrite("img", s => s.delete(id)); };
-function fillMissing(r, dup) {
-  const empty = v => v == null || v === "";
-  ["ra", "rb", "rating", "date", "where", "notes", "dishes", "price"].forEach(k => { if (empty(r[k]) && !empty(dup[k])) r[k] = dup[k]; });
-  if (dup.status === "visto" && r.status === "quero") r.status = "visto";
-  if ((dup.att || []).length) r.att = [...(r.att || []), ...dup.att.filter(x => !(r.att || []).some(y => y.id === x.id))];
-  coupleSync(r);
-}
 function syPullItems(snap) {
   const byId = new Map(S.items.map(i => [i.id, i])), byKey = new Map();
   S.items.forEach(i => { if (SY.sig[i.id] === undefined) byKey.set(idKey(i), i); });
-  let ch = false, maxU = SY.lastPull;
+  let ch = false, maxU = SY.lastPullItems;
   snap.docChanges().forEach(c => {
     if (c.type === "removed") return;
     const dd = c.doc, d = dd.data(); if (dd.metadata.hasPendingWrites || !d.u) return;
@@ -1203,12 +1308,12 @@ function syPullItems(snap) {
     }
     byId.set(id, it); SY.sig[id] = s0; ch = true;
   });
-  if (maxU > SY.lastPull) SY.lastPull = maxU;
+  if (maxU > SY.lastPullItems) SY.lastPullItems = maxU;
   syPersist(); SY.last = Date.now();
   if (ch) { save(); attGC(); attFetchMissing(); syRender(); } else syUi();
 }
 function syPullImgs(snap) {
-  let ch = false, maxU = SY.lastPull;
+  let ch = false, maxU = SY.lastPullImgs;
   snap.docChanges().forEach(c => {
     if (c.type === "removed") return;
     const dd = c.doc, d = dd.data(); if (dd.metadata.hasPendingWrites || !d.u) return;
@@ -1219,7 +1324,7 @@ function syPullImgs(snap) {
     if (cur && SY.isig[id] !== imgSig(cur)) return; /* foto local ainda não enviada */
     SY.isig[id] = imgSig(d.d); IMG.set(id, d.d); dbWrite("img", s => s.put(d.d, id)); ch = true;
   });
-  if (maxU > SY.lastPull) SY.lastPull = maxU;
+  if (maxU > SY.lastPullImgs) SY.lastPullImgs = maxU;
   syPersist();
   if (ch) syRender();
 }
@@ -1230,10 +1335,10 @@ function syNamesIn() {
   if (ns === SY.namesSig) { S.names = c.names; SY.namesSig = rs; save(); syRender(); } else syncSoon(1500);
 }
 let syTimer = null;
-function syncSoon(ms = 2500) { if (!SY.cid || !SY.user || !SY.F) return; clearTimeout(syTimer); syTimer = setTimeout(syPush, ms); }
+function syncSoon(ms = 2500) { updateSyncBadge(); if (!SY.cid || !SY.user || !SY.F) return; clearTimeout(syTimer); syTimer = setTimeout(syPush, ms); }
 async function syPush() {
   if (!SY.cid || !SY.user || !SY.F || SY.busy || !navigator.onLine) return;
-  SY.busy = true; SY.err = "";
+  SY.busy = true; SY.err = ""; updateSyncBadge();
   try {
     const { doc, writeBatch, serverTimestamp, updateDoc } = SY.F, fs = SY.fs, cid = SY.cid, byId = new Map(S.items.map(i => [i.id, i])), ops = [];
     const refd = new Set();
@@ -1243,8 +1348,7 @@ async function syPush() {
         refd.add(a.id); const d = ATT.get(a.id); if (!d || SY.aup[a.id] || d.length > AMAX) continue;
         const c = Math.ceil(d.length / ACH), b = writeBatch(fs);
         for (let n = 0; n < c; n++) b.set(doc(fs, "couples", cid, "files", a.id + "_" + n), { d: d.slice(n * ACH, (n + 1) * ACH), i: n, u: serverTimestamp() });
-        const pr = b.commit(); pr.catch(e => { delete SY.aup[a.id]; SY.err = syErr(e); syUi(); });
-        await Promise.race([pr, new Promise(r => setTimeout(r, 20000))]);
+        await b.commit();
         SY.aup[a.id] = c;
       }
     }
@@ -1255,13 +1359,11 @@ async function syPush() {
     for (let i = 0; i < ops.length; i += 300) {
       const part = ops.slice(i, i + 300), b = writeBatch(fs);
       part.forEach(o => b.set(o.ref, o.data));
-      const p = b.commit();
-      p.catch(e => { part.forEach(o => { if (o.k === "sig") delete SY.sig[o.id]; else delete SY.isig[o.id]; }); SY.err = syErr(e); syUi(); });
-      await Promise.race([p, new Promise(r => setTimeout(r, 8000))]); /* sem internet, o SDK guarda na fila e envia depois */
+      await b.commit();
       part.forEach(o => { if (o.k === "sig") SY.sig[o.id] = o.h; else if (o.h) SY.isig[o.id] = o.h; else delete SY.isig[o.id]; });
     }
     const ns = JSON.stringify(S.names);
-    if (SY.namesSig !== ns && SY.couple && JSON.stringify(SY.couple.names) !== ns) { updateDoc(doc(fs, "couples", cid), { names: S.names }).catch(() => { }); }
+    if (SY.namesSig !== ns && SY.couple && JSON.stringify(SY.couple.names) !== ns) { await updateDoc(doc(fs, "couples", cid), { names: S.names }).catch(() => { }); }
     SY.namesSig = ns;
     SY.last = Date.now(); syPersist();
   } catch (e) { SY.err = syErr(e); }
@@ -1274,7 +1376,7 @@ function syncDelete(id) {
   if (SY.isig[id] !== undefined) b.set(doc(SY.fs, "couples", SY.cid, "imgs", id), { del: true, d: "", u: serverTimestamp() });
   b.commit().catch(() => { }); delete SY.sig[id]; delete SY.isig[id]; syPersist();
 }
-function syReset() { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPull = 0; SY.namesSig = ""; syPersist(); }
+function syReset() { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPullItems = 0; SY.lastPullImgs = 0; SY.namesSig = ""; syPersist(); }
 async function syIn() {
   try { await syLoad(); const { GoogleAuthProvider, signInWithPopup } = SY.F; await signInWithPopup(SY.auth, new GoogleAuthProvider()); }
   catch (e) { if (!/popup-closed|cancelled-popup/.test((e && e.code) || "")) { SY.err = syErr(e); syUi(); } }
@@ -1352,7 +1454,6 @@ function wishRow(i) {
   const th = im ? `<img class="thumb" src="${im}" alt="">` : phHTML(i, "thumb");
   return `<div class="plan k-${kc(i)}" data-act="open" data-id="${i.id}" role="button" tabindex="0">${th}<div class="info"><b>${esc(i.title)}</b><small>${esc([i.kind === "filme" ? i.year : i.kind === "show" ? i.etype : i.cuisine, i.where].filter(Boolean).join(" · ") || "Sem data")}</small></div><button class="btn sm" data-act="agendar" data-id="${i.id}">Agendar</button></div>`;
 }
-const isoDate = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 function calHTML() {
   const A = ui.ag, today = todayStr(); if (!A.m) A.m = today.slice(0, 7);
   const [y, m] = A.m.split("-").map(Number), first = new Date(y, m - 1, 1), dim = new Date(y, m, 0).getDate(), rows = Math.ceil((first.getDay() + dim) / 7);
@@ -1398,8 +1499,6 @@ function viewAgenda() {
 const OSM_MIRRORS = ["https://overpass-api.de", "https://overpass.private.coffee", "https://overpass.kumi.systems", "https://maps.mail.ru/osm/tools/overpass"];
 const OSM_BBOX = [-25.6436, -49.3892, -25.3450, -49.1843]; /* sul, oeste, norte, leste */
 const OSM_TYPES = { rest: ["restaurant", "Restaurantes"], cafe: ["cafe", "Cafés e padarias"], fast: ["fast_food", "Fast-food e lanchonetes"], bar: ["bar|pub|biergarten", "Bares e pubs"], sorv: ["ice_cream", "Sorveterias"], praca: ["food_court", "Praças de alimentação"] };
-const OSM_CUIS = { pizza: "Pizzaria", italian: "Italiana", pasta: "Italiana", japanese: "Japonesa", sushi: "Japonesa", ramen: "Japonesa", burger: "Hambúrguer", brazilian: "Brasileira", regional: "Brasileira", steak_house: "Churrascaria", barbecue: "Churrascaria", churrasco: "Churrascaria", grill: "Churrascaria", arab: "Árabe", lebanese: "Árabe", kebab: "Árabe", middle_eastern: "Árabe", french: "Francesa", mexican: "Mexicana", coffee_shop: "Café / Padaria", cafe: "Café / Padaria", bakery: "Café / Padaria", vegetarian: "Vegetariana", vegan: "Vegetariana", seafood: "Frutos do mar", fish: "Frutos do mar", ice_cream: "Sorveteria", dessert: "Sobremesas", chinese: "Chinesa", thai: "Tailandesa", german: "Alemã", portuguese: "Portuguesa", spanish: "Espanhola", indian: "Indiana", korean: "Coreana", peruvian: "Peruana", argentinian: "Argentina", sandwich: "Lanches", fast_food: "Fast-food", chicken: "Frango", international: "Internacional", contemporary: "Contemporânea", ukrainian: "Ucraniana", polish: "Polonesa", asian: "Asiática", juice: "Sucos", pub: "Pub", bar: "Bar", diner: "Lanchonete", buffet: "Self-service", pastel: "Pastelaria", crepe: "Crepes", salad: "Saladas", steak: "Carnes", pancake: "Panquecas", tea: "Chá", beer: "Cervejaria" };
-const OSM_DEF = { cafe: "Café / Padaria", fast_food: "Fast-food", bar: "Bar", pub: "Bar", biergarten: "Bar", ice_cream: "Sorveteria", food_court: "Praça de alimentação" };
 const osmOut = h => { ui.osm = h; const e = $("#osmOut"); if (e) { e.hidden = false; e.innerHTML = h; } };
 let osmBusy = false, osmStop = false;
 /* ---------- buscar um restaurante pelo nome no OpenStreetMap (cadastro e Ajustes) ---------- */
@@ -1535,31 +1634,6 @@ async function osmBairros(city) {
   } catch (e) { return []; }
 }
 const bairroDe = (bairros, x, y) => { const b = bairros.find(z => x >= z.b.minlon && x <= z.b.maxlon && y >= z.b.minlat && y <= z.b.maxlat && z.rings.some(r => inRing(x, y, r))); return b ? b.name : ""; };
-function osmCuisine(t) {
-  const list = [];
-  (t.cuisine || "").split(/[;,]/).map(x => x.trim().toLowerCase().replace(/\s+/g, "_")).filter(Boolean).forEach(x => { const m = OSM_CUIS[x] || (x[0].toUpperCase() + x.slice(1).replace(/_/g, " ")); if (!list.includes(m)) list.push(m); });
-  return list.length ? list.slice(0, 2).join(", ") : (OSM_DEF[t.amenity] || "");
-}
-function osmFlags(t) {
-  const y = k => /^(yes|only|required)$/.test(t[k] || ""), f = [];
-  if (y("diet:vegetarian")) f.push("Opção vegetariana");
-  if (y("diet:vegan")) f.push("Opção vegana");
-  if (y("diet:gluten_free")) f.push("Sem glúten");
-  if (y("diet:halal")) f.push("Halal");
-  if (y("outdoor_seating")) f.push("Área externa");
-  if (y("wheelchair")) f.push("Acessível");
-  if (y("delivery")) f.push("Delivery");
-  if (y("takeaway")) f.push("Para levar");
-  if (y("drive_through")) f.push("Drive-thru");
-  if (y("reservation")) f.push("Reserva");
-  if (/^(wlan|yes|wifi)$/.test(t.internet_access || "")) f.push("Wi-Fi");
-  if (y("air_conditioning")) f.push("Ar-condicionado");
-  if (y("live_music") || y("music:live")) f.push("Música ao vivo");
-  if (y("payment:credit_cards")) f.push("Cartão");
-  if (y("payment:pix")) f.push("Pix");
-  if (y("microbrewery") || y("brewery")) f.push("Cervejaria");
-  return f;
-}
 function osmItem(e, t, x, y, bairros, batch) {
   const suburb = t["addr:suburb"] || t["addr:neighbourhood"] || "", bairro = suburb || bairroDe(bairros, x, y);
   const ig = (t["contact:instagram"] || t.instagram || "").trim(), web = (t.website || t["contact:website"] || t.url || "").trim();
@@ -1620,28 +1694,18 @@ const OSM_DIAS = { Mo: "Seg", Tu: "Ter", We: "Qua", Th: "Qui", Fr: "Sex", Sa: "S
 function osmInfoHTML(it) {
   const o = it.osm; if (!o) return "";
   const row = (l, v) => v ? `<div style="display:flex;gap:10px;margin:5px 0;font-size:14px"><b style="min-width:76px;flex:none">${l}</b><span style="min-width:0;overflow-wrap:anywhere">${v}</span></div>` : "";
-  const a = (h, t) => `<a href="${esc(h)}" target="_blank" rel="noopener" style="color:var(--accT)">${esc(t)}</a>`;
+  const a = (h, t) => { const u = safeUrl(h); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accT)">${esc(t)}</a>` : esc(t); };
   const maps = o.lat != null ? a(`https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lon}`, "Abrir no mapa") : "";
-  const tel = o.ph ? a("tel:" + o.ph.replace(/[^\d+]/g, ""), o.ph) : "";
+  const tel = o.ph ? `<a href="tel:${esc(o.ph.replace(/[^\d+]/g, ""))}" style="color:var(--accT)">${esc(o.ph)}</a>` : "";
   const hr = o.hr ? esc(o.hr).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH|off)\b/g, m => OSM_DIAS[m]) : "";
   return `<div class="card2" style="margin:0 0 14px;padding:12px 14px"><p class="eyebrow" style="margin:0 0 6px">Sobre o lugar</p>${row("Endereço", esc(o.ad || ""))}${row("Mapa", maps)}${row("Telefone", tel)}${row("Site", o.web ? a(o.web, o.web.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) : "")}${row("Instagram", o.ig ? a(o.ig, o.ig.replace(/^https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")) : "")}${row("Horário", hr)}${row("Comodidades", (o.fl || []).map(x => `<span class="pchip">${esc(x)}</span>`).join(""))}${row("Rede", esc(o.br || o.op || ""))}${row("Sobre", esc(o.ds || ""))}<p class="attr" style="margin:8px 0 0">Dados © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL). Podem estar desatualizados.</p></div>`;
 }
 
 /* ---------- ajustes ---------- */
-function themeCard(t) {
-  const v = t.v, sel = t.id === CUR.id;
-  return `<button class="tcard" data-act="theme" data-id="${t.id}" aria-pressed="${sel}">
-  <div class="tprev" style="background:${v.bg};color:${v.ink};--emc:${v.emc};font-family:${t.sans}">
-    <div class="trow">${symbol(t.id, 40)}<span class="twm" style="font-family:${t.serif};${t.wmcss}">${t.wm}</span></div>
-    <div class="tsw">${[v.bg, v.surface2, v.film, v.food, v.emc].map(c => `<i style="background:${c}"></i>`).join("")}</div>
-  </div>
-  <div class="tmeta"><b><span>${t.n} · ${esc(t.name)}</span>${sel ? `<span class="on">${ico("check", 14)} Em uso</span>` : ""}</b><span>${esc(t.tag)}</span></div></button>`;
-}
 function viewAjustes() {
   return `<div class="head"><div><h1>Ajustes</h1><p class="sub" id="devInfo" style="font-size:12px">${esc(DEV.info || "")}</p></div></div>
   ${storageOk ? "" : '<div class="warn"><b>Armazenamento indisponível neste modo.</b> O que você registrar pode se perder ao fechar a página. Baixe um backup com frequência.</div>'}
   ${(() => { if (!SY.F && !SY.loading) syLoad(); return syncCard(); })()}
-  <div class="card2" id="sec-theme"><h3>Aparência</h3><p class="muted" style="font-size:14px">Escolham a identidade visual do app. A troca é imediata e pode ser refeita quando quiserem. Fica salva neste aparelho.</p><div class="tgrid">${THEMES.map(themeCard).join("")}</div></div>
   <div class="card2"><h3>Quem somos</h3><div class="row2" style="margin-top:10px"><div><input type="text" id="nA" aria-label="Seu nome" value="${esc(S.names[0])}"></div><div><input type="text" id="nB" aria-label="Nome dela" value="${esc(S.names[1])}"></div></div></div>
   <div class="card2" id="sec-imp"><h3>Importar do Letterboxd</h3><p class="muted" style="font-size:14px">No Letterboxd: <b>Settings › Data › Export your data</b>. Escolha o arquivo <b>.zip</b> inteiro (ou os CSVs <i>watched, ratings, diary, watchlist, reviews</i>). Pode importar de novo quando quiser: nada é duplicado e as notas de vocês nunca são sobrescritas.</p>
   <div class="btns"><button class="btn primary" data-act="pick" data-in="fLB">Escolher ZIP ou CSVs</button></div><input type="file" id="fLB" accept=".zip,.csv" multiple hidden>${ui.imp ? `<div class="out">${ui.imp}</div>` : ""}</div>
@@ -1661,21 +1725,6 @@ function viewAjustes() {
 }
 
 /* ---------- importação Letterboxd ---------- */
-function parseCSV(t) {
-  t = t.replace(/^\uFEFF/, ""); const rows = []; let row = [], f = "", q = false;
-  for (let i = 0; i < t.length; i++) {
-    const c = t[i];
-    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
-    else if (c === '"') q = true;
-    else if (c === ",") { row.push(f); f = ""; }
-    else if (c === "\n" || c === "\r") { if (c === "\r" && t[i + 1] === "\n") i++; row.push(f); f = ""; rows.push(row); row = []; }
-    else f += c;
-  }
-  if (f !== "" || row.length) { row.push(f); rows.push(row); }
-  if (!rows.length) return [];
-  const h = rows.shift().map(x => x.trim().toLowerCase());
-  return rows.filter(r => r.some(x => x !== "")).map(r => { const o = {}; h.forEach((k, i) => o[k] = (r[i] || "").trim()); return o; });
-}
 function classify(name, rows, add) {
   const n = name.toLowerCase(), h = rows[0] || {};
   let k = null;
@@ -1683,8 +1732,6 @@ function classify(name, rows, add) {
   else if ("watched date" in h) k = "diary"; else if ("review" in h) k = "reviews"; else if ("rating" in h && "name" in h) k = "ratings";
   if (k && rows.length) add(k, rows);
 }
-const keyOf = (t, y) => norm(t) + "|" + (y || "");
-const stripHtml = s => s.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<[^>]+>/g, "").trim();
 function importLB(d) {
   const idx = new Map(); S.items.filter(i => i.kind === "filme").forEach(i => { idx.set(keyOf(i.title, i.year), i); if (i.orig) idx.set(keyOf(i.orig, i.year), i); });
   const touched = new Set(); let created = 0, wl = 0;
@@ -1709,13 +1756,26 @@ function importLB(d) {
   (d.reviews || []).forEach(r => { const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto"; const n = parseFloat(r.rating); if (n && !it.lbRating) it.lbRating = n; if (!it.notes && r.review) it.notes = stripHtml(r.review); });
   return { created, updated: [...touched].length, wl };
 }
+let JSZIP = null;
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  if (JSZIP) return JSZIP;
+  JSZIP = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    sc.onload = () => window.JSZip ? res(window.JSZip) : rej(new Error("O leitor de ZIP não carregou. Envie os arquivos CSV direto."));
+    sc.onerror = () => { JSZIP = null; rej(new Error("O leitor de ZIP não carregou. Verifique a conexão ou envie os arquivos CSV direto.")); };
+    document.head.appendChild(sc);
+  });
+  return JSZIP;
+}
 async function handleImport(files) {
   const out = {}, add = (k, rows) => (out[k] = out[k] || []).push(...rows);
   try {
     for (const f of files) {
       const n = f.name.toLowerCase();
       if (n.endsWith(".zip")) {
-        if (!window.JSZip) throw new Error("O leitor de ZIP não carregou. Envie os arquivos CSV direto.");
+        const JSZip = await loadJSZip();
         const z = await JSZip.loadAsync(f);
         for (const name of Object.keys(z.files)) {
           const e = z.files[name];
@@ -1850,7 +1910,8 @@ function fichaHTML(t, m, click) {
   const chips = a => (a || []).map(x => click ? `<button type="button" class="pchip" data-act="setwhere" data-v="${esc(x)}">${esc(x)}</button>` : `<span class="pchip">${esc(x)}</span>`).join("");
   const p = t.prov || {};
   const prov = [p.flat && p.flat.length ? `<div><b>Streaming</b><br>${chips(p.flat)}</div>` : "", p.rent && p.rent.length ? `<div><b>Alugar</b><br>${chips(p.rent)}</div>` : "", p.buy && p.buy.length ? `<div><b>Comprar</b><br>${chips(p.buy)}</div>` : ""].join("");
-  const links = [t.trailer ? `<a href="https://www.youtube.com/watch?v=${esc(t.trailer)}" target="_blank" rel="noopener">Trailer</a>` : "", t.imdb ? `<a href="https://www.imdb.com/title/${esc(t.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : "", `<a href="https://www.themoviedb.org/movie/${t.id}?language=pt-BR" target="_blank" rel="noopener">TMDB</a>`, t.homepage ? `<a href="${esc(t.homepage)}" target="_blank" rel="noopener">Site oficial</a>` : ""].filter(Boolean).join(" · ");
+  const hp = safeUrl(t.homepage);
+  const links = [t.trailer ? `<a href="https://www.youtube.com/watch?v=${esc(t.trailer)}" target="_blank" rel="noopener">Trailer</a>` : "", t.imdb ? `<a href="https://www.imdb.com/title/${esc(t.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : "", `<a href="https://www.themoviedb.org/movie/${t.id}?language=pt-BR" target="_blank" rel="noopener">TMDB</a>`, hp ? `<a href="${esc(hp)}" target="_blank" rel="noopener">Site oficial</a>` : ""].filter(Boolean).join(" · ");
   const cert = t.cert ? (t.cert === "L" ? "Livre" : t.cert + " anos") : "";
   const meta = [m.year, dur(t.runtime), cert, m.genre || ""].filter(Boolean).join(" · ");
   return `<div class="ficha">${t.tagline ? `<p class="tagl2">“${esc(t.tagline)}”</p>` : ""}${meta ? `<p class="muted" style="font-size:13.5px">${esc(meta)}</p>` : ""}${t.overview ? `<p style="font-size:14.5px;line-height:1.55">${esc(t.overview)}</p>` : ""}
@@ -1864,10 +1925,13 @@ const TXTABS = [["buscar", "Buscar"], ["cartaz", "Em cartaz"], ["breve", "Em bre
 function openExplorer(tab) {
   if (!TMDBKEY) { toast("Cole a chave do TMDB em Ajustes para explorar"); go("ajustes", "sec-tmdb"); return; }
   TX = { tab: tab || "buscar", mode: "filme", q: "", page: 1, total: 1, items: [], loading: false, err: "", detail: null, person: null, f: { genre: "", from: "", to: "", min: "", sort: "popularity.desc", lang: "", stream: "" } };
-  $("#tmx").hidden = false; document.body.style.overflow = "hidden";
+  const tmx = $("#tmx");
+  saveFocus(tmx);
+  tmx.hidden = false; document.body.style.overflow = "hidden";
   drawTX(); txLoad(true);
+  setTimeout(() => tmx.querySelector('[data-act="txclose"]')?.focus(), 20);
 }
-function closeExplorer() { TX = null; $("#tmx").hidden = true; document.body.style.overflow = $("#modal").hidden ? "" : "hidden"; }
+function closeExplorer() { const tmx = $("#tmx"); TX = null; tmx.hidden = true; document.body.style.overflow = $("#modal").hidden ? "" : "hidden"; restoreFocus(tmx); }
 function drawTX() {
   if (!TX) return;
   $("#tmx").innerHTML = `<div class="sheet wide"><div class="m-head"><h2>Explorar no TMDB</h2><button type="button" class="x" data-act="txclose" aria-label="Fechar">✕</button></div>
@@ -2164,15 +2228,13 @@ let ED = null;
 const WHERE_F = ["Cinema", "Em casa", "Netflix", "Prime Video", "Max", "Disney+", "Apple TV+", "Mubi", "Globoplay", "Telecine", "Paramount+"];
 const CUISINES = ["Brasileira", "Italiana", "Japonesa", "Pizzaria", "Hambúrguer", "Árabe", "Francesa", "Mexicana", "Churrascaria", "Café / Padaria", "Contemporânea", "Vegetariana", "Frutos do mar", "Sobremesas"];
 function rateHTML(key, label, val, big) {
-  const moon = big && CUR.moon ? `<span class="rmoon">${moonSVG(val, 36)}</span>` : "";
-  return `<div class="rate ${big ? "big" : ""}" data-key="${key}" ${val != null ? 'data-set="1"' : ""}><div class="rate-top">${moon}<span>${label}</span><b class="rv">${val != null ? fmt(val) : "—"}</b><button type="button" class="link" data-act="clr">limpar</button></div><input type="range" min="0" max="10" step="0.5" value="${val != null ? val : 7}" aria-label="${esc(label)}"></div>`;
+  return `<div class="rate ${big ? "big" : ""}" data-key="${key}" ${val != null ? 'data-set="1"' : ""}><div class="rate-top"><span>${label}</span><b class="rv">${val != null ? fmt(val) : "—"}</b><button type="button" class="link" data-act="clr">limpar</button></div><input type="range" min="0" max="10" step="0.5" value="${val != null ? val : 7}" aria-label="${esc(label)}"></div>`;
 }
 /* nota de vocês dois: só leitura, calculada como a média das notas de cada um */
 function coupleHTML(it) {
   const val = coupleAvg(it.ra, it.rb) ?? (it.ra == null && it.rb == null ? it.rating : null);
-  const moon = CUR.moon ? `<span class="rmoon">${moonSVG(val, 36)}</span>` : "";
   const hint = it.ra == null && it.rb == null && it.rating != null ? "nota anterior; ao avaliar, vira a média" : "média das duas notas";
-  return `<div class="rate big" data-key="rating" ${it.rating != null && it.ra == null && it.rb == null ? `data-legacy="${it.rating}"` : ""}><div class="rate-top">${moon}<span>Nota de vocês dois <small class="muted" id="rhint">· ${hint}</small></span><b class="rv">${val != null ? fmt(val) : "—"}</b></div></div>`;
+  return `<div class="rate big" data-key="rating" ${it.rating != null && it.ra == null && it.rb == null ? `data-legacy="${it.rating}"` : ""}><div class="rate-top"><span>Nota de vocês dois <small class="muted" id="rhint">· ${hint}</small></span><b class="rv">${val != null ? fmt(val) : "—"}</b></div></div>`;
 }
 function updCouple() {
   const g = k => { const r = document.querySelector(`.rate[data-key="${k}"]`); return r && r.dataset.set ? parseFloat(r.querySelector("input").value) : null; };
@@ -2180,7 +2242,6 @@ function updCouple() {
   const a = g("ra"), b = g("rb"), m = coupleAvg(a, b);
   const val = m ?? (a == null && b == null && c.dataset.legacy ? parseFloat(c.dataset.legacy) : null);
   c.querySelector(".rv").textContent = val != null ? fmt(val) : "—";
-  const mo = c.querySelector(".rmoon"); if (mo) mo.innerHTML = moonSVG(val, 36);
   const h = $("#rhint"); if (h) h.textContent = "· " + (m != null ? "média das duas notas" : a == null && b == null ? (c.dataset.legacy ? "nota anterior; ao avaliar, vira a média" : "avaliem os dois") : `falta a nota de ${a == null ? S.names[0] : S.names[1]}`);
 }
 function openEditor(id, kind, opts = {}) {
@@ -2224,13 +2285,15 @@ function drawEditor() {
     ${isR ? `<div class="fld"><label class="f" for="f_dishes">Pratos que amamos</label><input type="text" id="f_dishes" value="${esc(it.dishes)}"></div>` : ""}${isS ? `<div class="fld"><label class="f" for="f_hl">Melhor momento</label><input type="text" id="f_hl" value="${esc(it.hl || "")}" placeholder="aquele pôr do sol no palco 2…"></div>` : ""}
   </div>
   <div class="fld"><label class="f" for="f_notes">Comentários</label><textarea id="f_notes">${esc(it.notes)}</textarea></div>
-  ${it.lbRank ? `<p class="lbnote">Letterboxd, Top 250 dos anos ${esc(it.lbDecade)}: <b>#${it.lbRank}</b></p>` : ""}${it.lbRating || it.lbUri ? `<p class="lbnote">${it.lbRating ? "Sua nota no Letterboxd: <b>★ " + fmt(it.lbRating) + "</b>" : ""}${it.lbUri ? ` · <a href="${esc(it.lbUri)}" target="_blank" rel="noopener">abrir no Letterboxd</a>` : ""}</p>` : ""}
+  ${it.lbRank ? `<p class="lbnote">Letterboxd, Top 250 dos anos ${esc(it.lbDecade)}: <b>#${it.lbRank}</b></p>` : ""}${it.lbRating || safeUrl(it.lbUri) ? `<p class="lbnote">${it.lbRating ? "Sua nota no Letterboxd: <b>★ " + fmt(it.lbRating) + "</b>" : ""}${safeUrl(it.lbUri) ? ` · <a href="${esc(safeUrl(it.lbUri))}" target="_blank" rel="noopener">abrir no Letterboxd</a>` : ""}</p>` : ""}
   ${it.tm ? `<details class="fichad" open><summary>Ficha do TMDB</summary>${fichaHTML(it.tm, it, true)}<p class="attr">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</p></details>` : ""}
   <div class="acts">${ED.isNew ? "" : '<button type="button" class="btn danger" data-act="del">Excluir</button>'}${isR && !ED.isNew ? `<button type="button" class="btn" data-act="newvisit" data-key="${esc(plKey(it))}">Nova visita</button>` : ""}<span class="grow"></span><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn primary" data-act="save">Guardar</button></div></form>`;
+  saveFocus(m);
   m.hidden = false; document.body.style.overflow = "hidden";
   hrHint();
   if (ED.focus === "date") setTimeout(() => $("#f_date")?.focus(), 50);
   else if (ED.isNew) setTimeout(() => $("#f_title")?.focus(), 50);
+  else setTimeout(() => m.querySelector('[data-act="close"]')?.focus(), 50);
 }
 function hrHint() {
   const e = $("#hrHint"), i = $("#f_hr"); if (!e || !i) return; const v = i.value.trim();
@@ -2246,7 +2309,7 @@ function readForm() {
   if (cm != null) it.rating = cm; else if (it.ra != null || it.rb != null) it.rating = null; /* só um avaliou: ainda falta a média */
   return it;
 }
-function closeModal() { $("#modal").hidden = true; document.body.style.overflow = ""; ED = null; attGC(); }
+function closeModal() { const m = $("#modal"); m.hidden = true; document.body.style.overflow = ""; ED = null; attGC(); restoreFocus(m); }
 function saveEditor() {
   const it = readForm();
   if (!it.title) { toast("Dê um nome ao registro"); $("#f_title").focus(); return; }
@@ -2272,7 +2335,6 @@ document.addEventListener("click", async e => {
   const a = t.dataset.act, id = t.dataset.id;
   switch (a) {
     case "nav": go(t.dataset.sec, t.dataset.to); break;
-    case "theme": applyTheme(id, true); break;
     case "add": {
       const s = ui.sec;
       if (s === "filmes") openEditor(null, "filme", { status: ui.filmes.st === "quero" ? "quero" : "visto" });
@@ -2322,7 +2384,7 @@ document.addEventListener("click", async e => {
     }
     case "pick": $("#" + t.dataset.in).click(); break;
     case "rmphoto": ED.photo = null; ED.preview = null; readForm(); drawEditor(); break;
-    case "clr": { const r = t.closest(".rate"); delete r.dataset.set; r.querySelector(".rv").textContent = "—"; const mo = r.querySelector(".rmoon"); if (mo) mo.innerHTML = moonSVG(null, 36); updCouple(); break; }
+    case "clr": { const r = t.closest(".rate"); delete r.dataset.set; r.querySelector(".rv").textContent = "—"; updCouple(); break; }
     case "rsec": ui.rest.sec = t.dataset.s; render(); $("#view").scrollTop = 0; break;
     case "rkmore": ui.rk.n += 10; render(); break;
     case "sgmore": ui.sg.n += 12; render(); break;
@@ -2373,14 +2435,17 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { if (!$("#dlg").hidden) { $("#dlg").click(); } else if (TX) closeExplorer(); else if (ED) closeModal(); }
+  if (e.key === "Tab") {
+    const ov = !$("#dlg").hidden ? $("#dlg") : !$("#attv").hidden ? $("#attv") : !$("#tmx").hidden ? $("#tmx") : !$("#modal").hidden ? $("#modal") : null;
+    if (ov) trapTab(e, ov);
+  }
+  if (e.key === "Escape") { if (!$("#dlg").hidden) { $("#dlg").click(); } else if (AV) closeAtt(); else if (TX) closeExplorer(); else if (ED) closeModal(); }
   if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
 });
 document.addEventListener("input", e => {
   const t = e.target;
   if (t.matches('.rate input[type="range"]')) {
     const r = t.closest(".rate"), val = parseFloat(t.value); r.dataset.set = "1"; r.querySelector(".rv").textContent = fmt(val);
-    const mo = r.querySelector(".rmoon"); if (mo) mo.innerHTML = moonSVG(val, 36);
     updCouple();
   }
   if (t.dataset.sgq !== undefined) { ui.sg.q = t.value; ui.sg.n = 12; const l = $("#sgl"); if (l) l.innerHTML = sugList(); document.querySelectorAll(".wantchips .chip").forEach(c => c.setAttribute("aria-pressed", String(norm(ui.sg.q) === norm(c.dataset.w)))); return; }
@@ -2426,16 +2491,16 @@ document.addEventListener("change", async e => {
 });
 
 /* ---------- início ---------- */
-document.addEventListener("keydown", e => { if (e.key === "Escape" && AV) closeAtt(); });
 (async function init() {
   await loadAll();
   if (S.items.some(i => (i.att || []).some(a => a.m === "application/pdf"))) setTimeout(warmPdf, 2500);
   let cat = null;
   if (!S.catalogV) cat = loadCatalog();
-  applyTheme(S.theme || "lente");
+  applyTheme();
   syBoot();
   if (cat) setTimeout(() => toast(`Catálogo carregado: ${cat.created} filmes em “Quero ver”`), 700);
 })();
+
 </script>
 <script>
 /* PWA: funciona sem internet e avisa quando há versão nova */

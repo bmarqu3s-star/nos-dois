@@ -18,7 +18,7 @@ service cloud.firestore {
       allow create: if signed()
         && request.resource.data.by == request.auth.uid
         && isMember(request.resource.data.cid);
-      allow delete: if signed();
+      allow delete: if signed() && isMember(resource.data.cid);
     }
 
     match /couples/{cid} {

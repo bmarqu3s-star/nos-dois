@@ -1,5 +1,5 @@
 /* Nós Dois — service worker. A versão do cache é carimbada pelo build (scripts/build.mjs). */
-const VERSION = "nos-dois-a5d89107e8";
+const VERSION = "nos-dois-a896a39bde";
 const EXT = "nos-dois-externos";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "favicon.svg", "icons/icon-192.png", "icons/icon-512.png"];
 
@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
   }
   if (u.origin === location.origin) {
     e.respondWith(
-      caches.match(r).then(hit => hit || fetch(r).catch(() => (r.mode === "navigate" ? caches.match("index.html") : Response.error())))
+      caches.match(r, { ignoreSearch: true }).then(hit => hit || fetch(r).catch(() => (r.mode === "navigate" ? caches.match("index.html") : Response.error())))
     );
     return;
   }

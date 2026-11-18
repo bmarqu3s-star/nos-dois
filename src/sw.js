@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
   }
   if (u.origin === location.origin) {
     e.respondWith(
-      caches.match(r).then(hit => hit || fetch(r).catch(() => (r.mode === "navigate" ? caches.match("index.html") : Response.error())))
+      caches.match(r, { ignoreSearch: true }).then(hit => hit || fetch(r).catch(() => (r.mode === "navigate" ? caches.match("index.html") : Response.error())))
     );
     return;
   }

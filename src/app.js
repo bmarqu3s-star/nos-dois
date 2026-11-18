@@ -1,0 +1,1897 @@
+"use strict";
+/* ---------- aparelho: detecta iPhone/Android/PWA e ajusta a altura do app ---------- */
+const DEV = (() => {
+  const ua = navigator.userAgent || "", ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(ua), sa = (navigator.standalone === true) || matchMedia("(display-mode: standalone)").matches;
+  return { ios, android, sa, os: ios ? "ios" : android ? "android" : "desktop" };
+})();
+function fitApp() {
+  const de = document.documentElement, iw = innerWidth, ih = (window.visualViewport && visualViewport.height) || innerHeight;
+  const portrait = ih > iw; let h = 0;
+  /* iPhone instalado na tela de início às vezes abre com a janela menor que a tela (barra deslocada): usa a altura real da tela */
+  if (DEV.ios && DEV.sa && portrait) { const sh = Math.max(screen.width, screen.height); if (sh > ih + 8 && sh < ih + 140) h = sh; }
+  de.dataset.os = DEV.os; de.dataset.pwa = DEV.sa ? "1" : "0";
+  if (h) de.style.setProperty("--appH", h + "px"); else de.style.removeProperty("--appH");
+  DEV.info = `${DEV.os}${DEV.sa ? " · app instalado" : " · navegador"} · janela ${iw}×${Math.round(ih)} · tela ${screen.width}×${screen.height} · altura usada ${h || "automática"}`;
+  const e = document.getElementById("devInfo"); if (e) e.textContent = DEV.info;
+}
+fitApp(); ["resize", "orientationchange", "pageshow"].forEach(ev => addEventListener(ev, () => setTimeout(fitApp, 60)));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(fitApp, 60); else flushSave(); });
+addEventListener("pagehide", () => flushSave());
+if (window.visualViewport) visualViewport.addEventListener("resize", () => fitApp());
+
+/* ---------- utilidades de DOM / ícones ---------- */
+const $ = s => document.querySelector(s);
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+
+const IC = {
+  home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+  fork: '<path d="M6 3v6a3 3 0 0 0 3 3v9M12 3v6a3 3 0 0 1-3 3M9 3v18M19 21V3c-2.5 1.5-3.5 4-3.5 7.5H19"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  sliders: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  mark: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+  check: '<path d="M5 12l5 5L20 7"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+  ticket: '<path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2"/>',
+  img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+  doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
+  share: '<path d="M12 3v12M8 7l4-4 4 4M5 13v7h14v-7"/>'
+};
+const ico = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+
+/* ---------- tema (Caldeirão) ---------- */
+const F = { MAN: "Manrope:wght@400;500;700", BRI: "Bricolage+Grotesque:wght@500;800" };
+const DEF = {
+  chrome: "var(--surface)", chromeInk: "var(--ink)", chromeMuted: "var(--muted)", chromeLine: "var(--line)", chromeAct: "var(--surface2)",
+  hiBg: "var(--surface)", hiInk: "var(--ink)", hiB: "1px solid var(--line)", hiSh: "none", pr: "var(--r)",
+  cardsh: "none", tt: "none", ti: "italic", track: "-.01em", tw: "600"
+};
+const THEMES = [
+  { id: "caldeirao", n: "10", name: "Caldeirão", tag: "Adesivos, bordas grossas, a bruxa que ri", dark: false, badge: "sticker",
+    gf: [F.BRI, F.MAN], serif: "'Bricolage Grotesque', system-ui, sans-serif", sans: "'Manrope', system-ui, sans-serif",
+    wm: "Nós Dois", wmcss: "font-weight:800;letter-spacing:-.03em;text-shadow:2px 2px 0 #1E5A38",
+    gr: [["#6E1B33", "#2E7D4F"], ["#2E7D4F", "#1E5A38"], ["#C9507A", "#6E1B33"], ["#3F9A64", "#1E5A38"]],
+    v: { bg: "#FBF3DC", surface: "#FFF9E8", surface2: "#F0E4C4", ink: "#2A0F18", muted: "#6A4A52", line: "#E0CFA0", film: "#6E1B33", onFilm: "#FBF3DC", filmT: "#6E1B33", food: "#2E7D4F", onFood: "#FBF3DC", foodT: "#1F6A3E", gold: "#B9E3A0", onGold: "#2A0F18", goldT: "#1F6A3E", danger: "#B3261E", chrome: "#2E7D4F", chromeInk: "#FBF3DC", chromeMuted: "#C6E6CC", chromeLine: "#1E5A38", chromeAct: "#1E5A38", r: "14px", rb: "12px", rc: "999px", ri: "12px", cardb: "2px solid #6E1B33", cardsh: "4px 4px 0 #6E1B33", hiB: "2px solid #6E1B33", hiSh: "4px 4px 0 #6E1B33", emc: "#6E1B33", navOn: "#FBF3DC", bdgBg: "#FBF3DC", bdgInk: "#6E1B33", tw: "800", ti: "normal", track: "-.03em" } }
+];
+const CUR = THEMES[0];
+
+let SID = 0;
+const SYM = {
+  caldeirao: () => { const i = "c" + (++SID); return { w: 220, h: 140, b: `<defs><clipPath id="${i}"><circle cx="82" cy="70" r="52"/></clipPath></defs><circle cx="90" cy="78" r="52" fill="#143F27"/><circle cx="148" cy="78" r="52" fill="#143F27"/><circle cx="82" cy="70" r="52" fill="#FBF3DC" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#6E1B33" stroke="#6E1B33" stroke-width="5"/><circle cx="140" cy="70" r="52" fill="#B9E3A0" stroke="#6E1B33" stroke-width="5" clip-path="url(#${i})"/>` }; }
+};
+function symbol(id, h) {
+  const s = (SYM[id] || SYM.caldeirao)(), w = Math.round(h * s.w / s.h);
+  return `<svg width="${w}" height="${h}" viewBox="${s.x || 0} ${s.y || 0} ${s.w} ${s.h}" role="img" aria-label="Símbolo Nós Dois">${s.b}</svg>`;
+}
+const brandHTML = (t, h) => `<span class="bsym">${symbol(t.id, h)}</span><span class="bwm" style="${t.wmcss}">${t.wm}</span>`;
+
+function wantBtn(i) {
+  const on = isWant(i);
+  return `<button type="button" class="wantbtn ${on ? "on" : ""}" data-act="want" data-id="${i.id}" aria-pressed="${on}" aria-label="${on ? "Tirar de Queremos ver" : "Salvar em Queremos ver"}" title="${on ? "Em Queremos ver (toque para tirar)" : "Salvar em Queremos ver"}">${ico("mark", 18)}</button>`;
+}
+function badgeHTML(i) {
+  if (i.status !== "visto") return i.kind === "filme" ? wantBtn(i) : `<span class="badge wish">${ico("mark", 16)}</span>`;
+  if (i.rating == null) return `<span class="badge none" title="Falta avaliar">?</span>`;
+  return `<span class="badge b-sticker"><span>${fmt(i.rating)}</span></span>`;
+}
+
+const gfURL = l => "https://fonts.googleapis.com/css2?" + [...new Set(l)].map(f => "family=" + f).join("&") + "&display=swap";
+function loadFonts(key, list) {
+  if (document.getElementById("gf-" + key)) return;
+  const l = document.createElement("link"); l.id = "gf-" + key; l.rel = "stylesheet"; l.href = gfURL(list); document.head.appendChild(l);
+}
+function applyTheme() {
+  const t = CUR, r = document.documentElement, v = { ...DEF, ...t.v, serif: t.serif, sans: t.sans };
+  Object.keys(v).forEach(k => r.style.setProperty("--" + k, v[k]));
+  r.style.colorScheme = "light";
+  r.style.setProperty("--showT", "#8A5A00"); r.style.setProperty("--onShow", "#FFF7E0");
+  const tc = $("#tc"); if (tc) tc.setAttribute("content", t.v.chrome || t.v.bg);
+  loadFonts(t.id, t.gf);
+  S.theme = t.id;
+  renderShell(); render();
+}
+
+/* ---------- estado e armazenamento ---------- */
+let S = { v: 1, names: ["Eu", "Ela"], items: [], theme: "caldeirao", catalogV: 0 };
+let TMDBKEY = "";
+const IMG = new Map();
+let db = null, storageOk = false;
+let ui = { cat: "", tmdb: "", im: "", imf: { g: "", l: "", a: "2010", b: "2026", v: "200", m: "", n: "300", s: "popularity.desc", st: "", p: "1" }, sec: "home", rk: { by: "exp", cu: "", n: 10 }, sg: { q: "", cu: "", oh: "now", vis: "", pr: "", sort: "rating", n: 12 }, ag: { view: "lista", m: "", d: "" }, filmes: { st: "visto", q: "", sort: "recent", n: 60, g: "", dir: "", cast: "" }, rest: { st: "visto", q: "", sort: "recent", n: 60, bairro: "", cuis: "", sec: "lista" }, shows: { st: "visto", q: "", sort: "recent", n: 60, t: "", y: "", art: "" }, imp: "", pst: "", osm: "", osf: { rest: "1", cafe: "1", fast: "1", bar: "1", sorv: "1", praca: "1" } };
+
+const req2p = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+function openDB() {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open("nos-dois", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("kv"); r.result.createObjectStore("img"); };
+      r.onsuccess = () => { db = r.result; storageOk = true; res(true); };
+      r.onerror = r.onblocked = () => res(false);
+    } catch (e) { res(false); }
+  });
+}
+async function dbWrite(store, fn) {
+  if (!db) return;
+  try {
+    const t = db.transaction(store, "readwrite");
+    fn(t.objectStore(store));
+    await new Promise((res, rej) => { t.oncomplete = res; t.onerror = t.onabort = () => rej(t.error); });
+  } catch (e) { storageOk = false; }
+}
+let saveTimer = null, savePending = false;
+function flushSave() {
+  if (!savePending) return;
+  clearTimeout(saveTimer); savePending = false;
+  dbWrite("kv", s => s.put(JSON.parse(JSON.stringify(S)), "state"));
+}
+function save() {
+  savePending = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 250);
+  syncSoon();
+}
+const setImg = (id, d) => { IMG.set(id, d); dbWrite("img", s => s.put(d, id)); syncSoon(); };
+const delImg = id => { IMG.delete(id); dbWrite("img", s => s.delete(id)); syncSoon(); };
+async function loadAll() {
+  if (!(await openDB())) return;
+  try {
+    const st = await req2p(db.transaction("kv").objectStore("kv").get("state"));
+    if (st && Array.isArray(st.items)) S = { v: 1, names: st.names || ["Eu", "Ela"], items: st.items, theme: "caldeirao", catalogV: st.catalogV || 0, lastImp: st.lastImp || "", lastOsm: st.lastOsm || "" };
+    S.items.forEach(coupleSync);
+    S.items.forEach(i => { if (i.kind === "filme" && i.status === "quero" && i.want === undefined) i.want = !((i.src === "catalogo" || i.imp) && !i.edited && !i.date); });
+    TMDBKEY = (await req2p(db.transaction("kv").objectStore("kv").get("tmdbKey"))) || "";
+    const os = db.transaction("img").objectStore("img");
+    const keys = await req2p(os.getAllKeys()), vals = await req2p(os.getAll());
+    keys.forEach((k, i) => { if (typeof k === "string" && k.startsWith("a:")) ATT.set(k.slice(2), vals[i]); else IMG.set(k, vals[i]); });
+  } catch (e) { storageOk = false; }
+  attGC();
+}
+
+function loadCatalog() {
+  const idx = new Map();
+  S.items.filter(i => i.kind === "filme").forEach(i => { idx.set(keyOf(i.title, i.year), i); if (i.orig) idx.set(keyOf(i.orig, i.year), i); });
+  let created = 0, enriched = 0;
+  CATALOG.forEach(([dec, rank, orig, year, pt, dir, gen]) => {
+    const y = String(year); let it = idx.get(keyOf(orig, y)) || (pt && idx.get(keyOf(pt, y)));
+    if (!it) { it = newItem("filme", { title: pt || orig, orig, year: y, status: "quero", src: "catalogo", director: dir, genre: gen, lbRank: rank, lbDecade: dec }); S.items.push(it); idx.set(keyOf(orig, y), it); created++; }
+    else { let ch = false; if (!it.director && dir) { it.director = dir; ch = true; } if (!it.genre && gen) { it.genre = gen; ch = true; } if (!it.orig) { it.orig = orig; ch = true; } if (!it.lbRank) { it.lbRank = rank; it.lbDecade = dec; ch = true; } if (ch) enriched++; }
+  });
+  S.catalogV = 1; save();
+  return { created, enriched };
+}
+
+function newItem(kind, p = {}) {
+  return Object.assign({
+    id: uid(), kind, title: "", year: "", status: "visto", date: "", where: "",
+    rating: null, ra: null, rb: null, lbRating: null, lbUri: "", notes: "", tags: [],
+    cuisine: "", price: "", dishes: "", director: "", genre: "", orig: "", lbRank: null, lbDecade: "", tmdbId: null, src: "manual", edited: false, created: Date.now()
+  }, p);
+}
+
+/* ---------- UI helpers & acessibilidade ---------- */
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const prevFocus = new WeakMap();
+function saveFocus(ov) {
+  if (!ov) return;
+  const a = document.activeElement;
+  if (a && a !== document.body && !ov.contains(a)) prevFocus.set(ov, a);
+}
+function restoreFocus(ov) {
+  const f = prevFocus.get(ov);
+  prevFocus.delete(ov);
+  if (f && f.isConnected && typeof f.focus === "function") f.focus();
+}
+function trapTab(e, ov) {
+  if (e.key !== "Tab" || !ov || ov.hidden) return;
+  const els = [...ov.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null || el === document.activeElement);
+  if (!els.length) { e.preventDefault(); return; }
+  const first = els[0], last = els[els.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first || !ov.contains(document.activeElement)) { e.preventDefault(); last.focus(); }
+  } else if (document.activeElement === last || !ov.contains(document.activeElement)) {
+    e.preventDefault(); first.focus();
+  }
+}
+let toastT;
+function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2600); }
+function askConfirm(msg, ok = "Confirmar") {
+  return new Promise(res => {
+    const d = $("#dlg");
+    saveFocus(d);
+    d.innerHTML = `<div class="sheet" style="max-width:420px"><h2 style="margin-bottom:10px">Tem certeza?</h2><p class="muted">${esc(msg)}</p><div class="acts"><span class="grow"></span><button class="btn" data-d="0">Cancelar</button><button class="btn" style="background:var(--danger);border-color:var(--danger);color:var(--bg)" data-d="1">${esc(ok)}</button></div></div>`;
+    d.hidden = false;
+    setTimeout(() => d.querySelector('[data-d="0"]')?.focus(), 20);
+    d.onclick = e => { const b = e.target.closest("[data-d]"); if (b || e.target === d) { d.hidden = true; d.onclick = null; restoreFocus(d); res(b && b.dataset.d === "1"); } };
+  });
+}
+function readFileDataURL(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+async function resizeImage(file, max = 700, q = 0.74) {
+  const src = await readFileDataURL(file);
+  const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", q);
+}
+
+/* ---------- anexos de eventos: ingressos e line-up (foto ou PDF) ---------- */
+const ATT = new Map(), AF = new Set(), ACH = 700000, AMAX = 8500000;
+const attMeta = (it, t) => ((it && it.att) || []).filter(a => !t || a.t === t);
+const findIt = id => (ED && ED.it && ED.it.id === id) ? ED.it : S.items.find(i => i.id === id);
+const attSave = (id, d) => { ATT.set(id, d); dbWrite("img", st => st.put(d, "a:" + id)); };
+function attGC() {
+  if (ED) return;
+  const used = new Set(S.items.flatMap(i => (i.att || []).map(a => a.id)));
+  [...ATT.keys()].forEach(id => { if (!used.has(id)) { ATT.delete(id); dbWrite("img", st => st.delete("a:" + id)); } });
+}
+async function attRead(file, ty) {
+  const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+  if (pdf) {
+    if (file.size > 6e6) throw new Error("PDF maior que 6 MB");
+    const d = await readFileDataURL(file);
+    return { d: "data:application/pdf;base64," + d.split(",")[1], m: "application/pdf" };
+  }
+  if (!/^image\//.test(file.type)) throw new Error("Use uma foto ou um PDF");
+  const d = await resizeImage(file, ty === "lineup" ? 2400 : 1800, 0.86);
+  if (d.length > AMAX) throw new Error("Imagem grande demais");
+  return { d, m: "image/jpeg" };
+}
+let PDFJS = null;
+function loadPdfJs() {
+  if (PDFJS) return PDFJS;
+  PDFJS = new Promise((res, rej) => {
+    const sc = document.createElement("script"); sc.src = "vendor/pdf.min.js";
+    sc.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js"; res(window.pdfjsLib); } catch (e) { rej(e); } };
+    sc.onerror = () => { PDFJS = null; rej(new Error("Leitor de PDF indisponível")); };
+    document.head.appendChild(sc);
+  });
+  return PDFJS;
+}
+const warmPdf = () => loadPdfJs().then(() => fetch("vendor/pdf.worker.min.js").catch(() => { })).catch(() => { });
+async function pdfRender(dataUrl, host, z) {
+  const lib = await loadPdfJs();
+  const bin = atob(dataUrl.split(",")[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const pdf = await lib.getDocument({ data: u8 }).promise;
+  host.innerHTML = "";
+  for (let n = 1; n <= Math.min(pdf.numPages, 12); n++) {
+    const pg = await pdf.getPage(n), base = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: 1800 / base.width });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height); c.style.width = z * 100 + "%";
+    host.appendChild(c);
+    await pg.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+  }
+}
+async function attFetch(a) {
+  if (ATT.has(a.id)) return true;
+  if (AF.has(a.id) || !SY.cid || !SY.F || !SY.fs || !navigator.onLine) return false;
+  AF.add(a.id);
+  try {
+    const { doc, getDoc } = SY.F, parts = [];
+    for (let n = 0; n < (a.c || 1); n++) { const sn = await getDoc(doc(SY.fs, "couples", SY.cid, "files", a.id + "_" + n)); if (!sn.exists()) throw new Error("falta parte"); parts.push(sn.data().d); }
+    attSave(a.id, parts.join("")); SY.aup[a.id] = a.c || 1; syPersist(); return true;
+  } catch (e) { return false; } finally { AF.delete(a.id); }
+}
+let afm = false;
+async function attFetchMissing() {
+  if (afm || !SY.cid || !SY.F || !SY.fs || !navigator.onLine) return;
+  afm = true;
+  try { for (const it of S.items) for (const a of (it.att || [])) if (!ATT.has(a.id)) await attFetch(a); } finally { afm = false; }
+  if (!ED && !AV) render();
+}
+let AV = null, wakeL = null;
+function openAtt(itemId, ty, aid) {
+  const it = findIt(itemId); if (!it) return;
+  const list = attMeta(it, ty); if (!list.length) return;
+  AV = { it, list, i: Math.max(0, list.findIndex(a => a.id === aid)), z: 1 };
+  const v = $("#attv");
+  saveFocus(v);
+  v.hidden = false; document.body.style.overflow = "hidden";
+  try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(l => { wakeL = l; }).catch(() => { }); } catch (e) { }
+  drawAtt();
+  setTimeout(() => v.querySelector('[data-act="avclose"]')?.focus(), 20);
+}
+function closeAtt() {
+  const v = $("#attv");
+  v.hidden = true; AV = null; if (!ED) document.body.style.overflow = "";
+  try { if (wakeL) wakeL.release(); } catch (e) { } wakeL = null;
+  restoreFocus(v);
+}
+async function drawAtt() {
+  if (!AV) return;
+  const A = AV, a = A.list[A.i], v = $("#attv"), n = A.list.length, pdf = a.m === "application/pdf";
+  v.innerHTML = `<div class="av-top"><button class="btn" data-act="avclose" aria-label="Fechar">✕</button><b>${esc(a.n)}${n > 1 ? ` · ${A.i + 1}/${n}` : ""}<small>${esc(A.it.title || "")}${a.t === "lineup" ? " · line-up" : " · ingresso"}</small></b><button class="btn" data-act="avz" data-z="-1" aria-label="Diminuir">−</button><button class="btn" data-act="avz" data-z="1" aria-label="Ampliar">+</button><button class="btn" data-act="avshare" aria-label="Salvar ou compartilhar">${ico("share", 18)}</button></div><div class="av-body" id="avb"></div>${n > 1 ? `<div class="av-nav">${A.list.map((x, k) => `<button class="chip" data-act="avgo" data-k="${k}" aria-pressed="${k === A.i}">${esc(x.n)}</button>`).join("")}</div>` : ""}`;
+  let body = $("#avb"), d = ATT.get(a.id);
+  if (!d) {
+    body.innerHTML = `<p class="av-msg">Baixando da nuvem…</p>`;
+    const ok = await attFetch(a); if (!AV || AV !== A || A.list[A.i] !== a) return;
+    d = ATT.get(a.id);
+    if (!ok || !d) { $("#avb").innerHTML = `<p class="av-msg">Este arquivo ainda não chegou neste aparelho.<br>Conecte-se à internet e tente de novo.</p><button class="btn" data-act="avretry">Tentar de novo</button>`; return; }
+  }
+  body = $("#avb");
+  if (!pdf) { body.innerHTML = `<img src="${d}" alt="${esc(a.n)}" style="width:${A.z * 100}%">`; return; }
+  body.innerHTML = `<p class="av-msg">Abrindo PDF…</p>`;
+  try { await pdfRender(d, body, A.z); } catch (e) { if (AV === A && A.list[A.i] === a) body.innerHTML = `<p class="av-msg">Não consegui mostrar este PDF aqui.<br>Use o botão de compartilhar para abri-lo em outro app.</p>`; }
+}
+function avZoom(dz) {
+  if (!AV) return;
+  AV.z = Math.min(4, Math.max(1, AV.z + dz * 0.5));
+  document.querySelectorAll("#avb img, #avb canvas").forEach(e => { e.style.width = AV.z * 100 + "%"; });
+}
+async function attShare() {
+  if (!AV) return;
+  const a = AV.list[AV.i], d = ATT.get(a.id); if (!d) return;
+  const blob = await (await fetch(d)).blob(), ext = a.m === "application/pdf" ? "pdf" : "jpg", f = new File([blob], (a.n || "anexo") + "." + ext, { type: a.m });
+  try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: a.n }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+  const url = URL.createObjectURL(blob), l = document.createElement("a"); l.href = url; l.download = f.name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function attList(it, ty) {
+  return attMeta(it, ty).map(a => `<div class="attrow"><span class="attic">${ico(a.m === "application/pdf" ? "doc" : "img", 18)}</span><button type="button" class="attn" data-act="attopen" data-id="${it.id}" data-t="${ty}" data-a="${a.id}">${esc(a.n)}</button><button type="button" class="x" data-act="attrm" data-a="${a.id}" aria-label="Remover anexo">✕</button></div>`).join("");
+}
+function attFields(it) {
+  return `<div class="attbox"><label class="f">Ingressos (foto ou PDF)</label>${attList(it, "ticket")}<button type="button" class="btn sm" data-act="pick" data-in="fTk">${ico("plus", 15)} Adicionar ingresso</button><input type="file" id="fTk" data-att="ticket" accept="image/*,application/pdf" multiple hidden></div>
+  <div class="attbox"><label class="f">Line-up e horários (foto ou PDF)</label>${attList(it, "lineup")}<button type="button" class="btn sm" data-act="pick" data-in="fLu">${ico("plus", 15)} Adicionar line-up</button><input type="file" id="fLu" data-att="lineup" accept="image/*,application/pdf" multiple hidden></div>`;
+}
+function eventDayPanel() {
+  const today = todayStr(), lim = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return isoDate(d); })();
+  const l = S.items.filter(i => i.kind === "show" && i.status === "quero" && i.date && i.date <= lim && (i.dateEnd || i.date) >= today).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  return l.map(i => {
+    const n = dayDiff(i.date), when = n > 0 ? `em ${n} ${n === 1 ? "dia" : "dias"}` : n === 0 ? "hoje" : "acontecendo agora", tk = attMeta(i, "ticket"), lu = attMeta(i, "lineup");
+    const btn = (t, arr, lab) => arr.length ? `<button class="btn primary" data-act="attopen" data-id="${i.id}" data-t="${t}">${ico(t === "ticket" ? "ticket" : "img", 18)} ${lab}${arr.length > 1 ? " (" + arr.length + ")" : ""}</button>` : "";
+    return `<div class="panel cta evd"><div><p class="eyebrow">${esc(i.etype || "Evento")} · ${when}</p><h3>${esc(i.title)}</h3><p class="muted">${esc([fmtRange(i), i.where].filter(Boolean).join(" · "))}${tk.length ? "" : " · sem ingresso anexado"}</p></div><div class="btnrow">${btn("ticket", tk, "Ingressos")}${btn("lineup", lu, "Line-up")}<button class="btn" data-act="open" data-id="${i.id}">Ficha</button></div></div>`;
+  }).join("");
+}
+
+/* ---------- componentes ---------- */
+function phHTML(i, cls = "poster") {
+  const g = CUR.gr[hash(i.title + i.kind) % CUR.gr.length];
+  const ini = (i.title || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  return `<div class="${cls} ph" style="background:linear-gradient(145deg,${g[0]},${g[1]})">${ico(kIcon(i.kind), 120)}${esc(ini)}</div>`;
+}
+function card(i) {
+  const im = IMG.get(i.id);
+  const media = im ? `<img class="poster" src="${im}" alt="" loading="lazy">` : phHTML(i);
+  const lb = i.kind === "show" ? [i.etype, attMeta(i, "ticket").length ? "ingresso" : "", attMeta(i, "lineup").length ? "line-up" : ""].filter(Boolean).map((x, k) => `<span class="lbchip" style="top:${8 + k * 26}px">${esc(x)}</span>`).join("") : i.kind === "rest" ? ((plCounts().get(plKey(i)) || 0) > 1 ? `<span class="lbchip">${plCounts().get(plKey(i))} visitas</span>` : "") : i.lbRating ? `<span class="lbchip">★ ${fmt(i.lbRating)}</span>` : (i.lbRank ? `<span class="lbchip">#${i.lbRank} · ${esc(i.lbDecade)}</span>` : "");
+  const sub = i.kind === "filme" ? [i.year, firstDir(i.director)].filter(Boolean).join(" · ") : i.kind === "show" ? [i.where, i.city].filter(Boolean).join(" · ") : [i.cuisine, i.where].filter(Boolean).join(" · ");
+  const gen = i.kind === "filme" && i.genre ? i.genre.split(",").slice(0, 2).map(x => x.trim()).join(" · ") : "";
+  const cdn = i.kind === "show" && i.date && i.status === "quero" ? (() => { const n = dayDiff(i.date); return n > 0 ? "em " + n + (n === 1 ? " dia" : " dias") : n === 0 ? "é hoje!" : (i.dateEnd && i.dateEnd >= todayStr() ? "acontecendo" : "já passou"); })() : "";
+  const dt = i.kind === "show" ? [i.date ? fmtRange(i) : (i.status === "quero" ? "Sem data" : ""), cdn, i.status === "quero" ? ticketTxt(i.ticket) : ""].filter(Boolean).join(" · ") : i.date ? (i.status === "quero" ? "Programado · " : "") + fmtDate(i.date) + (i.kind === "filme" && i.where ? " · " + i.where : "") : (i.status === "visto" ? gen : (gen || "Na fila"));
+  return `<div class="card k-${kc(i)}" role="button" tabindex="0" data-act="open" data-id="${i.id}">${media}${badgeHTML(i)}${lb}<div class="cap"><b>${esc(i.title)}</b><small>${esc(sub)}</small><small>${esc(dt)}</small></div></div>`;
+}
+function sortItems(list, mode, st) {
+  const t = (a, b) => a.title.localeCompare(b.title, "pt-BR");
+  const cmp = {
+    recent: (a, b) => st === "quero" ? ((a.date || "9999").localeCompare(b.date || "9999") || t(a, b)) : ((b.date || "").localeCompare(a.date || "") || t(a, b)),
+    rating: (a, b) => ((b.rating ?? -1) - (a.rating ?? -1)) || ((b.lbRating ?? -1) - (a.lbRating ?? -1)) || t(a, b),
+    title: t,
+    year: (a, b) => ((+b.year || 0) - (+a.year || 0)) || t(a, b),
+    lb: (a, b) => ((b.lbRating ?? -1) - (a.lbRating ?? -1)) || t(a, b),
+    rank: (a, b) => ((a.lbRank || 9999) - (b.lbRank || 9999)) || t(a, b),
+    dir: (a, b) => (a.director || "~").localeCompare(b.director || "~", "pt-BR") || t(a, b),
+    cost: (a, b) => (costN(b) - costN(a)) || t(a, b)
+  }[mode] || t;
+  return list.slice().sort(cmp);
+}
+
+/* ---------- navegação ---------- */
+const NAV = [["home", "Início", "Início", "home"], ["filmes", "Filmes", "Filmes", "film"], ["rest", "Mesa", "Restaurantes", "fork"], ["eventos", "Eventos", "Eventos", "music"], ["agenda", "Agenda", "Agenda", "cal"], ["ajustes", "Ajustes", "Ajustes", "sliders"]];
+function renderShell() {
+  $("#nav").innerHTML = NAV.map(n => `<button data-act="nav" data-sec="${n[0]}" ${ui.sec === n[0] ? 'aria-current="page"' : ""}>${ico(n[3], 22)}<span>${n[1]}</span></button>`).join("");
+  $("#topBrand").innerHTML = brandHTML(CUR, 24);
+  $("#side").innerHTML = `<div class="brand">${brandHTML(CUR, 30)}</div><div class="tagl">cinema, mesa &amp; eventos de ${esc(S.names[0])} e ${esc(S.names[1])}</div>` +
+    NAV.filter(n => n[0] !== "ajustes").map(n => `<button class="nv" data-act="nav" data-sec="${n[0]}" ${ui.sec === n[0] ? 'aria-current="page"' : ""}>${ico(n[3], 20)}${n[2]}</button>`).join("") +
+    `<div class="spacer"></div><button class="nv" data-act="nav" data-sec="ajustes" ${ui.sec === "ajustes" ? 'aria-current="page"' : ""}>${ico("sliders", 20)}Ajustes</button>`;
+  $("#topSec").textContent = NAV.find(n => n[0] === ui.sec)[2];
+  const fab = $("#fab"); fab.innerHTML = ico("plus", 26); fab.hidden = !["filmes", "rest", "eventos", "agenda"].includes(ui.sec);
+}
+function go(sec, to) {
+  ui.sec = sec;
+  document.body.dataset.sec = sec;
+  renderShell(); render();
+  if (to) { const el = document.getElementById(to); if (el) { el.scrollIntoView(); return; } }
+  window.scrollTo(0, 0); { const mv = $("#view"); if (mv) mv.scrollTop = 0; }
+}
+function render() {
+  _plMemo = null; const v = $("#view");
+  v.innerHTML = `<div class="wrap">${{ home: viewHome, filmes: () => viewCollection("filme"), rest: () => viewCollection("rest"), eventos: () => viewCollection("show"), agenda: viewAgenda, ajustes: viewAjustes }[ui.sec]()}</div>`;
+}
+
+/* ---------- início ---------- */
+function viewHome() {
+  const its = S.items, films = its.filter(i => i.kind === "filme"), rests = its.filter(i => i.kind === "rest"), shows = its.filter(i => i.kind === "show");
+  const fv = films.filter(i => i.status === "visto"), rv = rests.filter(i => i.status === "visto"), sv = shows.filter(i => i.status === "visto");
+  const fa = avg(fv.filter(i => i.rating != null).map(i => i.rating)), ra = avg(rv.filter(i => i.rating != null).map(i => i.rating)), sa = avg(sv.filter(i => i.rating != null).map(i => i.rating));
+  const hero = `<div class="hero"><div class="hsym">${symbol(CUR.id, 46)}</div><p class="eyebrow">${esc(S.names[0])} &amp; ${esc(S.names[1])}</p><h1>Nossas noites, <em>registradas.</em></h1></div>`;
+  if (!its.length) return hero + `<div class="empty"><h2>Vamos começar o diário de vocês</h2><p class="muted">Importe seus filmes do Letterboxd ou registre o primeiro programa a dois.</p><ol class="steps" style="text-align:left;max-width:440px;margin:18px auto 0"><li>Importe o ZIP (ou os CSVs) exportado do Letterboxd.</li><li>Avaliem juntos cada filme e cada restaurante: nota, onde e quando.</li><li>Programem os próximos na Agenda.</li></ol><div class="acts"><button class="btn primary" data-act="nav" data-sec="ajustes" data-to="sec-imp">Importar do Letterboxd</button><button class="btn" data-act="add">Adicionar manualmente</button></div></div>`;
+  const stats = `<div class="stats"><div class="stat film"><div class="n">${fv.length}</div><div class="l">filmes vistos</div></div><div class="stat film"><div class="n">${fa != null ? fa.toFixed(1).replace(".", ",") : "—"}</div><div class="l">nota média dos filmes</div></div><div class="stat food"><div class="n">${rv.length}</div><div class="l">restaurantes visitados</div></div><div class="stat food"><div class="n">${ra != null ? ra.toFixed(1).replace(".", ",") : "—"}</div><div class="l">nota média dos restaurantes</div></div><div class="stat show"><div class="n">${sv.length}</div><div class="l">eventos vividos</div></div><div class="stat show"><div class="n">${sa != null ? sa.toFixed(1).replace(".", ",") : "—"}</div><div class="l">nota média dos eventos</div></div></div>`;
+  const today = todayStr();
+  const next = its.filter(i => i.status === "quero" && i.date && i.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const toRate = its.filter(i => i.status === "visto" && i.rating == null);
+  let panels = "";
+  panels += next ? `<div class="panel cta"><div><p class="eyebrow">Próximo programa</p><h2>${esc(next.title)}</h2><p class="muted">${KNAME[next.kind]} · ${toDate(next.date).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}${next.where ? " · " + esc(next.where) : ""}</p></div><button class="btn" data-act="open" data-id="${next.id}">Ver detalhes</button></div>` :
+    `<div class="panel cta"><div><p class="eyebrow">Próximo programa</p><h3>Nada marcado ainda</h3><p class="muted">Programem o próximo filme, jantar ou evento.</p></div><button class="btn primary" data-act="nav" data-sec="agenda">Abrir agenda</button></div>`;
+  panels += eventDayPanel();
+  if (toRate.length) panels += `<div class="panel cta"><div><p class="eyebrow">Para avaliar a dois</p><h3>${toRate.length} ${toRate.length === 1 ? "registro sem" : "registros sem"} a nota de vocês</h3></div><button class="btn primary" data-act="torate">Avaliar agora</button></div>`;
+  const best = k => sortItems(its.filter(i => i.kind === k && i.status === "visto" && i.rating != null), "rating").slice(0, 10);
+  const bf = best("filme"), br = best("rest"), bs = best("show");
+  const sc = (t, l, sec) => l.length ? `<div class="sechead"><h2>${t}</h2><button class="link" data-act="nav" data-sec="${sec}">ver todos</button></div><div class="scroller">${l.map(card).join("")}</div>` : "";
+  const wl = its.filter(isWant), up = sortItems(wl.length ? wl : its.filter(i => i.kind === "filme" && i.status === "quero" && i.src === "catalogo"), "rank").slice(0, 10);
+  return hero + stats + panels + sc("Filmes que mais amamos", bf, "filmes") + sc(wl.length ? "Queremos ver" : "Sugestões do catálogo", up, "filmes") + sc("Restaurantes que mais amamos", br, "rest") + sc("Eventos que mais amamos", bs, "eventos");
+}
+
+/* ---------- coleções ---------- */
+function filtered(kind) {
+  const u = ui[KUI[kind]];
+  let l = S.items.filter(i => i.kind === kind);
+  l = u.st === "geral" ? l : u.st === "visto" ? l.filter(i => i.status === "visto") : u.st === "quero" ? l.filter(i => kind === "filme" ? isWant(i) : i.status === "quero") : l.filter(i => i.status === "visto" && i.rating == null);
+  if (u.g) l = l.filter(i => (i.genre || "").split(",").map(x => x.trim()).includes(u.g));
+  if (u.dir) { const q = norm(u.dir); l = l.filter(i => norm(i.director || "").includes(q)); }
+  if (u.bairro) { const q = norm(u.bairro); l = l.filter(i => norm(i.where || "").includes(q)); }
+  if (u.cuis) { const q = norm(u.cuis); l = l.filter(i => norm(i.cuisine || "").includes(q)); }
+  if (u.t) l = l.filter(i => i.etype === u.t);
+  if (u.y) l = l.filter(i => (i.date || "").slice(0, 4) === u.y);
+  if (u.art) { const q = norm(u.art); l = l.filter(i => norm(i.artists || "").includes(q)); }
+  if (u.cast) { const q = norm(u.cast); l = l.filter(i => i.tm && (i.tm.cast || []).some(c => norm(c.n).includes(q))); }
+  const q = norm(u.q);
+  if (q) l = l.filter(i => norm([i.title, i.orig, i.year, i.director, i.genre, i.tm ? (i.tm.cast || []).map(c => c.n).join(" ") + " " + (i.tm.keywords || []).join(" ") : "", i.where, i.cuisine, i.notes, i.dishes, i.artists, i.city, i.etype, i.hl, i.osm ? i.osm.ad + " " + (i.osm.fl || []).join(" ") + " " + i.osm.br : "", (i.tags || []).join(" ")].join(" ")).includes(q));
+  return sortItems(l, u.sort, u.st);
+}
+function listHTML(kind) {
+  const u = ui[KUI[kind]], l = filtered(kind), shown = l.slice(0, u.n);
+  if (!l.length) {
+    const any = S.items.some(i => i.kind === kind);
+    if (u.q || u.dir || u.cast || u.g || u.bairro || u.cuis || u.t || u.y || u.art) { const sem = u.cast ? S.items.filter(i => i.kind === "filme" && !i.tm).length : 0; return `<div class="empty"><p class="muted">Nada encontrado com esses filtros.${sem ? ` ${sem} filmes ainda não têm elenco: use Ajustes › Completar o que falta.` : ""}</p></div>`; }
+    if (!any) return `<div class="empty"><h2>${kind === "filme" ? "Nenhum filme ainda" : kind === "show" ? "Nenhum evento ainda" : "Nenhum restaurante ainda"}</h2><p class="muted">${kind === "filme" ? "Importem o export do Letterboxd ou adicionem um filme." : kind === "show" ? "Registrem o primeiro festival, rave ou show de vocês, ou programem o próximo." : "Registrem o primeiro restaurante de vocês."}</p><div class="acts">${kind === "filme" ? '<button class="btn primary" data-act="nav" data-sec="ajustes" data-to="sec-imp">Importar do Letterboxd</button>' : ""}${kind === "filme" ? '<button class="btn" data-act="txopen" data-tab="buscar">Explorar no TMDB</button>' : ""}<button class="btn ${kind === "filme" ? "" : "primary"}" data-act="add">Adicionar</button></div></div>`;
+    return `<div class="empty"><p class="muted">${u.st === "avaliar" ? "Tudo avaliado por aqui." : kind === "filme" && u.st === "quero" ? `Nada salvo ainda. Em <b>Geral</b>, toquem no marcador ${ico("mark", 14)} na capa do filme para guardá-lo em Queremos ver.` : "Nada nesta lista."}</p></div>`;
+  }
+  return `<div class="grid ${kind === "rest" ? "rest" : kind === "show" ? "show" : ""}">${shown.map(card).join("")}</div>` +
+    (l.length > shown.length ? `<div class="more"><button class="btn" data-act="more" data-k="${kind}">Mostrar mais (${l.length - shown.length})</button></div>` : "");
+}
+function filmFilters(u) {
+  const films = S.items.filter(i => i.kind === "filme");
+  const pt = (a, b) => a.localeCompare(b, "pt-BR");
+  const dirs = [...new Set(films.flatMap(i => (i.director || "").split(",").map(x => x.trim()).filter(Boolean)))].sort(pt);
+  const cast = [...new Set(films.flatMap(i => ((i.tm && i.tm.cast) || []).map(c => c.n)))].sort(pt).slice(0, 2000);
+  return `<div class="toolbar" style="margin-top:-6px"><input type="search" list="dl-fdir" data-fdir="1" value="${esc(u.dir)}" placeholder="Filtrar por diretor(a)…" aria-label="Filtrar por diretor" style="flex:1 1 200px;width:auto"><datalist id="dl-fdir">${dirs.map(d => `<option value="${esc(d)}">`).join("")}</datalist><input type="search" list="dl-fcast" data-fcast="1" value="${esc(u.cast)}" placeholder="Filtrar por elenco…" aria-label="Filtrar por elenco" style="flex:1 1 200px;width:auto"><datalist id="dl-fcast">${cast.map(d => `<option value="${esc(d)}">`).join("")}</datalist></div>`;
+}
+function genreSel(cur) {
+  const all = [...new Set(S.items.filter(i => i.kind === "filme").flatMap(i => (i.genre || "").split(",").map(x => x.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  return `<select data-genre="1" aria-label="Gênero"><option value="">Todos os gêneros</option>${all.map(g => `<option ${cur === g ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>`;
+}
+function showStats() {
+  const sh = S.items.filter(i => i.kind === "show"); if (!sh.length) return "";
+  const v = sh.filter(i => i.status === "visto"), today = todayStr();
+  const a = avg(v.filter(i => i.rating != null).map(i => i.rating)), gasto = v.reduce((t, i) => t + costN(i), 0);
+  const nx = sh.filter(i => i.status === "quero" && i.date && (i.dateEnd || i.date) >= today).sort((x, y) => x.date.localeCompare(y.date))[0];
+  const nxt = nx ? (() => { const n = dayDiff(nx.date); return n > 0 ? `em ${n} ${n === 1 ? "dia" : "dias"}` : n === 0 ? "hoje" : "acontecendo"; })() : "—";
+  return `<div class="stats s4"><div class="stat show"><div class="n">${v.length}</div><div class="l">eventos vividos</div></div><div class="stat show"><div class="n">${a != null ? a.toFixed(1).replace(".", ",") : "—"}</div><div class="l">nota média</div></div><div class="stat show"><div class="n" style="font-size:${gasto >= 10000 ? 22 : 28}px">${gasto ? brl(gasto) : "—"}</div><div class="l">gasto nos eventos</div></div><div class="stat show"><div class="n" style="font-size:22px">${nxt}</div><div class="l">${nx ? esc(nx.title) : "próximo evento"}</div></div></div>`;
+}
+function showFilters(u) {
+  const sh = S.items.filter(i => i.kind === "show"); if (sh.length < 3) return "";
+  const pt = (x, y) => x.localeCompare(y, "pt-BR");
+  const years = [...new Set(sh.map(i => (i.date || "").slice(0, 4)).filter(Boolean))].sort().reverse();
+  const arts = [...new Set(sh.flatMap(i => (i.artists || "").split(/[,;\n]/).map(x => x.trim()).filter(Boolean)))].sort(pt);
+  return `<div class="toolbar" style="margin-top:-6px"><select data-stype="1" aria-label="Tipo de evento" style="flex:1 1 130px;width:auto"><option value="">Todos os tipos</option>${ETYPES.map(t => `<option ${u.t === t ? "selected" : ""}>${t}</option>`).join("")}</select><select data-syear="1" aria-label="Ano" style="flex:1 1 110px;width:auto"><option value="">Todos os anos</option>${years.map(y => `<option ${u.y === y ? "selected" : ""}>${y}</option>`).join("")}</select><input type="search" list="dl-sart" data-sart="1" value="${esc(u.art)}" placeholder="Filtrar por artista…" aria-label="Filtrar por artista" style="flex:1 1 200px;width:auto"><datalist id="dl-sart">${arts.map(d => `<option value="${esc(d)}">`).join("")}</datalist></div>`;
+}
+/* ---------- restaurantes: cadastro (lugar) + experiências ---------- */
+const CUISINE_GROUPS = [
+  ["Cozinhas", ["Brasileira", "Mineira / Regional", "Self-service / Buffet", "Churrascaria", "Italiana", "Pizzaria", "Japonesa", "Chinesa", "Coreana", "Tailandesa", "Indiana", "Árabe", "Mexicana", "Peruana", "Argentina", "Francesa", "Portuguesa", "Espanhola", "Alemã", "Hambúrguer", "Lanches", "Frango", "Frutos do mar", "Vegetariana", "Contemporânea", "Internacional"]],
+  ["Café e doces", ["Café / Padaria", "Sobremesas", "Sorveteria", "Confeitaria"]],
+  ["Bebidas e coquetelaria", ["Coquetelaria / Drinks", "Speakeasy", "Bar", "Bar de vinhos", "Cervejaria / Pub"]]
+];
+const WANT = [["Sushi", /japon|sushi|temaki|yakisoba/], ["Pizza", /pizz/], ["Hambúrguer", /hamb|burger/], ["Massa", /ital|massa|pizz/], ["Churrasco", /churr|carne|grill|barbec|steak/], ["Brasileira", /brasil|mineir|regional|buffet|self/], ["Árabe", /arab/], ["Café e doces", /caf|padar|doce|sobrem|sorvet|confeit/], ["Drinks", /\bbar\b|coquet|drink|pub|cervej|speak|vinho/], ["Vegetariana", /veg/], ["Frutos do mar", /frutos|peixe|marisc/]];
+const plKey = i => i.osm ? "o" + i.osm.id : "t" + norm(i.title) + "|" + norm(i.where || "");
+function places() {
+  const m = new Map();
+  for (const i of S.items) { if (i.kind !== "rest") continue; const k = plKey(i); let p = m.get(k); if (!p) m.set(k, p = { key: k, items: [] }); p.items.push(i); }
+  for (const p of m.values()) {
+    const by = [...p.items].sort((a, b) => (b.edited ? 1 : 0) - (a.edited ? 1 : 0) || (b.date || "").localeCompare(a.date || "")), pick = f => { const x = by.find(i => i[f]); return x ? x[f] : ""; };
+    p.title = by[0].title; p.cuisine = pick("cuisine"); p.price = pick("price"); p.where = pick("where"); p.hr = pick("hr"); p.dishes = pick("dishes");
+    p.osm = (p.items.find(i => i.osm) || {}).osm || null; p.photoId = (p.items.find(i => IMG.has(i.id)) || {}).id || null;
+    p.visits = p.items.filter(i => i.status === "visto"); p.rated = p.visits.filter(i => i.rating != null);
+    p.avg = p.rated.length ? avg(p.rated.map(i => i.rating)) : null; p.last = p.visits.map(i => i.date || "").sort().pop() || "";
+    p.hours = p.hr || (p.osm && p.osm.hr) || ""; p.open = (p.visits.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0] || by[0]);
+  }
+  return m;
+}
+let _plMemo = null;
+const plCounts = () => _plMemo || (_plMemo = (() => { const c = new Map(); for (const i of S.items) if (i.kind === "rest" && i.status === "visto") { const k = plKey(i); c.set(k, (c.get(k) || 0) + 1); } return c; })());
+function ohPill(p) {
+  const o = ohState(p.hours); if (!o.known) return `<span class="pill na">horário não informado</span>`;
+  return o.open ? `<span class="pill ok">aberto · até ${o.until}</span>` : `<span class="pill no">fechado${o.opens ? " · abre " + o.opens : ""}</span>`;
+}
+const wantRe = q => { const n = norm(q); if (!n) return null; const w = WANT.find(x => norm(x[0]) === n || norm(x[0]).startsWith(n)); return w ? w[1] : null; };
+function cuisineSel(cur) {
+  const known = new Set(CUISINE_GROUPS.flatMap(g => g[1])), extra = cur && !known.has(cur) ? `<option selected>${esc(cur)}</option>` : "";
+  return `<select id="f_cuisine"><option value="">—</option>${extra}${CUISINE_GROUPS.map(g => `<optgroup label="${g[0]}">${g[1].map(c => `<option ${cur === c ? "selected" : ""}>${c}</option>`).join("")}</optgroup>`).join("")}</select>`;
+}
+function fillFromPlace(it, p) {
+  it.title = p.title; it.cuisine = p.cuisine; it.price = p.price; it.where = p.where; it.hr = p.hr || ""; if (p.osm) it.osm = { ...p.osm };
+  if (p.photoId && !ED.preview) { ED.preview = IMG.get(p.photoId); ED.photo = ED.preview; }
+  ED.filled = `Restaurante já cadastrado: dados preenchidos${p.visits.length ? ` (${p.visits.length} ${p.visits.length === 1 ? "visita" : "visitas"}${p.avg != null ? ", nota média " + fmt(Math.round(p.avg * 10) / 10) : ""})` : ""}. Conte como foi desta vez.`;
+}
+function placeAutofill() {
+  if (!ED || ED.it.kind !== "rest" || !ED.isNew) return;
+  const v = norm($("#f_title") && $("#f_title").value); if (!v) return;
+  const c = [...places().values()].filter(p => norm(p.title) === v).sort((a, b) => b.visits.length - a.visits.length); if (!c.length) return;
+  const p = c[0], pend = p.items.find(i => i.status === "quero");
+  if (!p.visits.length && pend) { openEditor(pend.id, "rest", { status: "visto" }); toast("Restaurante já cadastrado: registre a visita"); return; }
+  readForm(); const it = ED.it; fillFromPlace(it, p); if (it.status === "visto" && !it.date) it.date = todayStr(); drawEditor();
+}
+function newVisit(key) {
+  const p = places().get(key); if (!p) return;
+  openEditor(null, "rest", { status: "visto", date: todayStr(), title: p.title }); fillFromPlace(ED.it, p); drawEditor();
+}
+function restTabs() {
+  const u = ui.rest;
+  return `<div class="kseg rtabs">${[["lista", "Restaurantes"], ["ranking", "Ranking"], ["sugestoes", "Sugestões"]].map(x => `<button type="button" class="chip" data-act="rsec" data-s="${x[0]}" aria-pressed="${u.sec === x[0]}">${x[1]}</button>`).join("")}</div>`;
+}
+function cuisineOpts(cur, all) {
+  const set = new Set(); for (const i of S.items) if (i.kind === "rest" && i.cuisine && (all || i.status === "visto")) set.add(i.cuisine);
+  return `<option value="">Todas as cozinhas</option>${[...set].sort((a, b) => a.localeCompare(b, "pt-BR")).map(c => `<option ${cur === c ? "selected" : ""}>${esc(c)}</option>`).join("")}`;
+}
+function rankingHTML() {
+  const k = ui.rk, N = S.names.map(esc);
+  let rows;
+  if (k.by === "rest") {
+    rows = [...places().values()].filter(p => p.avg != null && (!k.cu || p.cuisine === k.cu)).sort((a, b) => b.avg - a.avg || b.rated.length - a.rated.length || (b.last || "").localeCompare(a.last || "")).map(p => ({ id: p.open.id, t: p.title, sub: [p.cuisine, p.where].filter(Boolean).join(" · "), nt: p.avg, n2: `${p.rated.length} ${p.rated.length === 1 ? "visita" : "visitas"}` }));
+  } else {
+    rows = S.items.filter(i => i.kind === "rest" && i.status === "visto" && i.rating != null && (!k.cu || i.cuisine === k.cu)).sort((a, b) => b.rating - a.rating || (b.date || "").localeCompare(a.date || "")).map(i => ({ id: i.id, t: i.title, sub: [i.cuisine, i.where, i.date ? fmtDate(i.date) : ""].filter(Boolean).join(" · "), nt: i.rating, n2: i.ra != null && i.rb != null ? `${N[0]} ${fmt(i.ra)} · ${N[1]} ${fmt(i.rb)}` : "" }));
+  }
+  const shown = rows.slice(0, k.n);
+  return `<p class="muted" style="margin:0 0 12px">As melhores experiências gastronômicas de ${N[0]} e ${N[1]}, pela nota do casal.</p>
+  <div class="sgbar"><select data-rk="by" aria-label="Agrupar"><option value="exp" ${k.by === "exp" ? "selected" : ""}>Por experiência</option><option value="rest" ${k.by === "rest" ? "selected" : ""}>Por restaurante (média)</option></select><select data-rk="cu" aria-label="Cozinha">${cuisineOpts(k.cu, false)}</select></div>
+  ${shown.length ? shown.map((r, n) => `<div class="rk ${n < 3 ? "m" + (n + 1) : ""}" role="button" tabindex="0" data-act="open" data-id="${r.id}"><div class="pos">${n + 1}</div><div class="info"><b>${esc(r.t)}</b><small>${esc(r.sub)}</small></div><div class="nt"><b>${fmt(Math.round(r.nt * 10) / 10)}</b><small>${esc(r.n2)}</small></div></div>`).join("") : `<div class="empty"><p class="muted">Ainda não há experiências avaliadas pelos dois${k.cu ? " nesta cozinha" : ""}. Avaliem uma visita para ela aparecer aqui.</p></div>`}
+  ${rows.length > shown.length ? `<div class="more"><button class="btn" data-act="rkmore">Mostrar mais (${rows.length - shown.length})</button></div>` : ""}`;
+}
+function sugRows() {
+  const g = ui.sg, re = wantRe(g.q), qn = norm(g.q), maxP = +g.pr || 0;
+  let l = [...places().values()];
+  if (g.q) l = l.filter(p => { const t = norm([p.cuisine, p.title, p.dishes].join(" ")); return re ? re.test(t) : t.includes(qn); });
+  if (g.cu) l = l.filter(p => p.cuisine === g.cu);
+  if (g.vis === "ja") l = l.filter(p => p.visits.length); else if (g.vis === "nao") l = l.filter(p => !p.visits.length);
+  if (maxP) l = l.filter(p => !priceN(p.price) || priceN(p.price) <= maxP);
+  l.forEach(p => { p._o = ohState(p.hours); });
+  if (g.oh === "now") l = l.filter(p => !p._o.known || p._o.open); else if (g.oh === "strict") l = l.filter(p => p._o.known && p._o.open);
+  const pr = p => priceN(p.price) || 99, ra = p => p.avg == null ? -1 : p.avg, vis = p => p.visits.length;
+  const cmp = { rating: (a, b) => ra(b) - ra(a) || pr(a) - pr(b) || vis(b) - vis(a), price: (a, b) => pr(a) - pr(b) || ra(b) - ra(a), value: (a, b) => (ra(b) / (priceN(b.price) || 3)) - (ra(a) / (priceN(a.price) || 3)) || ra(b) - ra(a) }[g.sort] || (() => 0);
+  return l.sort((a, b) => cmp(a, b) || a.title.localeCompare(b.title, "pt-BR"));
+}
+function sugList() {
+  const rows = sugRows(), g = ui.sg, shown = rows.slice(0, g.n);
+  if (!rows.length) return `<div class="empty"><p class="muted">Nenhum restaurante com esses critérios. Tentem outro horário, outra cozinha ou mais faixas de preço.</p></div>`;
+  return `<p class="muted" style="margin:0 0 10px;font-size:13px">${rows.length} ${rows.length === 1 ? "opção" : "opções"}</p>` + shown.map(p => `<div class="sg" role="button" tabindex="0" data-act="open" data-id="${p.open.id}"><div class="info"><b>${esc(p.title)}</b><small>${esc([p.cuisine, p.where, p.price].filter(Boolean).join(" · ") || "sem detalhes")}</small><small>${p.avg != null ? `nota ${fmt(Math.round(p.avg * 10) / 10)} · ${p.rated.length} ${p.rated.length === 1 ? "visita" : "visitas"}` : p.visits.length ? "visitado, sem nota dos dois" : "ainda não fomos"}${p._o && p._o.known ? " · hoje " + esc(p._o.today) : ""}</small></div><div class="side2">${ohPill(p)}<button type="button" class="btn sm" data-act="newvisit" data-key="${esc(p.key)}">Fomos!</button></div></div>`).join("") +
+    (rows.length > shown.length ? `<div class="more"><button class="btn" data-act="sgmore">Mostrar mais (${rows.length - shown.length})</button></div>` : "");
+}
+function suggestHTML() {
+  const g = ui.sg;
+  return `<p class="muted" style="margin:0 0 10px">Escolham a vontade do dia. A lista segue a nota do casal, o preço e o horário de funcionamento.</p>
+  <div class="wantchips">${WANT.map(w => `<button type="button" class="chip" data-act="sgchip" data-w="${w[0]}" aria-pressed="${norm(g.q) === norm(w[0])}">${w[0]}</button>`).join("")}</div>
+  <div class="sgbar"><input type="search" id="sgq" data-sgq="1" value="${esc(g.q)}" placeholder="Vontade de… (sushi, pizza, drinks)" aria-label="Vontade de"><select data-sg="cu" aria-label="Cozinha">${cuisineOpts(g.cu, true)}</select></div>
+  <div class="sgbar"><select data-sg="oh" aria-label="Horário">${[["now", "Aberto agora*"], ["strict", "Aberto (confirmado)"], ["", "Qualquer horário"]].map(o => `<option value="${o[0]}" ${g.oh === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select><select data-sg="pr" aria-label="Preço máximo">${[["", "Qualquer preço"], ["1", "Até R$"], ["2", "Até R$$"], ["3", "Até R$$$"]].map(o => `<option value="${o[0]}" ${g.pr === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select><select data-sg="vis" aria-label="Já fomos">${[["", "Todos"], ["ja", "Já fomos"], ["nao", "Novidades"]].map(o => `<option value="${o[0]}" ${g.vis === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select><select data-sg="sort" aria-label="Ordenar">${[["rating", "Melhor avaliação"], ["price", "Menor preço"], ["value", "Custo-benefício"]].map(o => `<option value="${o[0]}" ${g.sort === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>
+  <p class="hintp" style="margin:-2px 0 12px">*inclui restaurantes sem horário cadastrado. Preencham o horário na ficha para a lista saber se está aberto.</p><div id="sgl">${sugList()}</div>`;
+}
+function viewCollection(kind) {
+  const k = KUI[kind], u = ui[k], isF = kind === "filme", isS = kind === "show";
+  const all = S.items.filter(i => i.kind === kind);
+  const c = { visto: all.filter(i => i.status === "visto").length, quero: all.filter(i => kind === "filme" ? isWant(i) : i.status === "quero").length, avaliar: all.filter(i => i.status === "visto" && i.rating == null).length, geral: all.length };
+  if (!u.touched && u.st === "visto" && !c.visto && c.quero) u.st = "quero";
+  const chips = isF ? [["quero", "Queremos ver"], ["visto", "Já vimos"], ["geral", "Geral"]] : isS ? [["quero", "Queremos ir"], ["visto", "Já fomos"], ["geral", "Geral"]] : [["visto", "Visitados"], ["quero", "Quero ir"], ["avaliar", "Por avaliar"]];
+  const pend = (isF || isS) && c.avaliar ? `<button class="chip" data-act="chip" data-k="${k}" data-st="avaliar" aria-pressed="${u.st === "avaliar"}" title="${isF ? "Já vimos" : "Já fomos"}, mas falta a nota de um dos dois">Por avaliar<b>${c.avaliar}</b></button>` : "";
+  const sorts = isF ? [["recent", "Mais recentes"], ["rating", "Nossa nota"], ["lb", "Nota Letterboxd"], ["rank", "Ranking do catálogo"], ["title", "Título A–Z"], ["year", "Ano de lançamento"], ["dir", "Diretor A–Z"]] : isS ? [["recent", "Mais recentes"], ["rating", "Nossa nota"], ["title", "Nome A–Z"], ["cost", "Maior gasto"]] : [["recent", "Mais recentes"], ["rating", "Nossa nota"], ["title", "Nome A–Z"]];
+  const sub = `${c.visto} ${isF ? "vistos" : isS ? "vividos" : "visitados"} · ${c.quero} ${isF ? "para ver" : isS ? "para ir" : "na fila"}${c.avaliar ? " · " + c.avaliar + " por avaliar" : ""}`;
+  const HEAD = `<div class="head"><div><h1>${isF ? "Filmes" : isS ? "Eventos" : "Restaurantes"}</h1><p class="sub">${sub}</p></div><div class="btnrow">${isF ? `<button class="btn" data-act="txopen" data-tab="buscar">${ico("search", 18)} Explorar no TMDB</button>` : ""}${kind === "rest" ? `<button class="btn" data-act="nav" data-sec="ajustes" data-to="sec-imp-osm">${ico("search", 18)} Importar de Curitiba</button>` : ""}<button class="btn primary desk" data-act="add">${ico("plus", 18)} ${isF ? "Adicionar filme" : isS ? "Adicionar evento" : "Adicionar restaurante"}</button></div></div>`;
+  if (kind === "rest" && u.sec !== "lista") return HEAD + restTabs() + (u.sec === "ranking" ? rankingHTML() : suggestHTML());
+  return HEAD + (kind === "rest" ? restTabs() : "") + `
+  ${isS ? eventDayPanel() + showStats() : ""}
+  <div class="toolbar"><div class="seg">${chips.map(x => `<button class="chip" data-act="chip" data-k="${k}" data-st="${x[0]}" aria-pressed="${u.st === x[0]}">${x[1]}<b>${c[x[0]]}</b></button>`).join("")}${pend}</div>
+  <div class="tb-right"><input type="search" placeholder="Buscar…" value="${esc(u.q)}" data-q="${k}" aria-label="Buscar">${isF ? genreSel(u.g) : ""}<select data-sort="${k}" aria-label="Ordenar">${sorts.map(s => `<option value="${s[0]}" ${u.sort === s[0] ? "selected" : ""}>${s[1]}</option>`).join("")}</select></div></div>
+  ${isF ? filmFilters(u) : isS ? showFilters(u) : restFilters(u)}
+  <div id="list">${listHTML(kind)}</div>`;
+}
+function restFilters(u) {
+  const rs = S.items.filter(i => i.kind === "rest"), pt = (a, b) => a.localeCompare(b, "pt-BR");
+  if (rs.length < 8) return "";
+  const bs = [...new Set(rs.map(i => i.where).filter(Boolean))].sort(pt), cs = [...new Set(rs.flatMap(i => (i.cuisine || "").split(",").map(x => x.trim()).filter(Boolean)))].sort(pt);
+  return `<div class="toolbar" style="margin-top:-6px"><input type="search" list="dl-rb" data-rbairro="1" value="${esc(u.bairro)}" placeholder="Filtrar por bairro…" aria-label="Filtrar por bairro" style="flex:1 1 200px;width:auto"><datalist id="dl-rb">${bs.map(d => `<option value="${esc(d)}">`).join("")}</datalist><input type="search" list="dl-rc" data-rcuis="1" value="${esc(u.cuis)}" placeholder="Filtrar por cozinha…" aria-label="Filtrar por cozinha" style="flex:1 1 200px;width:auto"><datalist id="dl-rc">${cs.map(d => `<option value="${esc(d)}">`).join("")}</datalist></div>`;
+}
+
+/* ---------- sincronização do casal (Firebase: login Google + Firestore, plano Spark) ---------- */
+const FB_CFG = { apiKey: "AIzaSyCblqUFnvOyKc6QNV3LPspsxr99KTg4hKo", authDomain: "nos-dois-87ec5.firebaseapp.com", projectId: "nos-dois-87ec5", storageBucket: "nos-dois-87ec5.firebasestorage.app", messagingSenderId: "1005815658591", appId: "1:1005815658591:web:981685d8b505d2ba7f83ea" };
+const FB_V = "10.14.1";
+const SY = { F: null, app: null, auth: null, fs: null, user: null, uid: "", cid: null, couple: null, err: "", msg: "", busy: false, loading: null, unsub: [], sig: {}, isig: {}, aup: {}, namesSig: "", lastPullItems: 0, lastPullImgs: 0, last: 0, code: "", invite: null, pendingInvite: "" };
+const syPersist = () => dbWrite("kv", s => s.put({ cid: SY.cid, uid: SY.uid, sig: SY.sig, isig: SY.isig, aup: SY.aup, lastPullItems: SY.lastPullItems, lastPullImgs: SY.lastPullImgs, namesSig: SY.namesSig }, "sync"));
+async function syLoadState() {
+  try {
+    const v = db && await req2p(db.transaction("kv").objectStore("kv").get("sync"));
+    if (v) {
+      SY.cid = v.cid || null; SY.uid = v.uid || ""; SY.sig = v.sig || {}; SY.isig = v.isig || {}; SY.aup = v.aup || {};
+      SY.lastPullItems = v.lastPullItems ?? v.lastPull ?? 0;
+      SY.lastPullImgs = v.lastPullImgs ?? v.lastPull ?? 0;
+      SY.namesSig = v.namesSig || "";
+    }
+  } catch (e) { }
+}
+function syErr(e) {
+  const c = (e && (e.code || "")) + "";
+  if (/permission-denied/.test(c)) return "Sem permissão no Firestore. As regras já foram publicadas (npm run deploy)?";
+  if (/popup-blocked/.test(c)) return "O navegador bloqueou a janela de login do Google. Libere pop-ups para este site.";
+  if (/unavailable|network/.test(c)) return "Sem conexão agora. Continua funcionando neste aparelho e sincroniza quando a internet voltar.";
+  if (/resource-exhausted/.test(c)) return "Limite diário do plano gratuito atingido. Sincroniza de novo amanhã.";
+  if (/unauthorized-domain/.test(c)) return "Este endereço não está autorizado no login do Firebase.";
+  return (e && e.message) || "Erro de sincronização.";
+}
+function updateSyncBadge() {
+  const b = $("#syncBadge");
+  if (!b) return;
+  if (!SY.cid) { b.hidden = true; return; }
+  const pending = S.items.some(it => syncable(it) && SY.sig[it.id] !== sigOf(it));
+  if (SY.busy) { b.hidden = false; b.textContent = "Sincronizando…"; b.dataset.st = "busy"; }
+  else if (!navigator.onLine) { b.hidden = false; b.textContent = pending ? "Offline · pendente" : "Offline"; b.dataset.st = "off"; }
+  else if (SY.err) { b.hidden = false; b.textContent = "Erro no sync"; b.dataset.st = "err"; }
+  else if (pending) { b.hidden = false; b.textContent = "Pendente…"; b.dataset.st = "wait"; }
+  else { b.hidden = true; b.dataset.st = ""; }
+}
+addEventListener("online", () => { if (SY.cid) syncSoon(500); updateSyncBadge(); });
+addEventListener("offline", () => updateSyncBadge());
+function syUi() { const e = $("#syncCard"); if (e) e.outerHTML = syncCard(); updateSyncBadge(); }
+function syRender() { clearTimeout(SY.rt); SY.rt = setTimeout(() => { renderShell(); if (!ED) render(); else syUi(); }, 300); }
+function syLoad() {
+  if (SY.loading) return SY.loading;
+  SY.loading = (async () => {
+    const base = `https://www.gstatic.com/firebasejs/${FB_V}/`;
+    const [A, Au, Fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+    SY.F = { ...A, ...Au, ...Fs };
+    SY.app = A.initializeApp(FB_CFG);
+    SY.auth = Au.getAuth(SY.app);
+    try { SY.fs = Fs.initializeFirestore(SY.app, { localCache: Fs.persistentLocalCache({ tabManager: Fs.persistentMultipleTabManager() }) }); } catch (e) { SY.fs = Fs.getFirestore(SY.app); }
+    Au.onAuthStateChanged(SY.auth, syAuth);
+    syUi();
+  })().catch(() => { SY.loading = null; SY.err = "Não consegui carregar o Firebase (sem internet ou bloqueado)."; syUi(); });
+  return SY.loading;
+}
+function stopSync() { SY.unsub.forEach(f => { try { f(); } catch (e) { } }); SY.unsub = []; SY.couple = null; }
+async function syAuth(user) {
+  stopSync(); SY.user = user; SY.err = "";
+  if (!user) { syUi(); return; }
+  if (SY.uid && SY.uid !== user.uid) { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPullItems = 0; SY.lastPullImgs = 0; SY.cid = null; SY.namesSig = ""; }
+  SY.uid = user.uid;
+  try {
+    const { doc, getDoc } = SY.F;
+    let cid = null;
+    try { const us = await getDoc(doc(SY.fs, "users", user.uid)); cid = us.exists() ? us.data().cid : null; } catch (e) { cid = SY.cid; if (!cid) throw e; }
+    if (SY.pendingInvite && !cid) { await syJoin(SY.pendingInvite); return; }
+    if (SY.pendingInvite && cid) { syClearInvite(); SY.msg = "Esta conta já faz parte de um casal; o convite foi ignorado."; }
+    if (cid) await syStart(cid); else { SY.cid = null; syPersist(); }
+  } catch (e) { SY.err = syErr(e); if (SY.pendingInvite) { syClearInvite(); } }
+  syUi();
+}
+async function syStart(cid) {
+  const { doc, collection, query, where, onSnapshot, Timestamp, updateDoc } = SY.F, fs = SY.fs, cref = doc(fs, "couples", cid);
+  SY.cid = cid; SY.uid = SY.user.uid; syPersist();
+  const bad = e => { SY.err = syErr(e); syUi(); };
+  SY.unsub.push(onSnapshot(cref, s => { if (!s.exists()) return; SY.couple = s.data(); syNamesIn(); syUi(); }, bad));
+  updateDoc(cref, { ["people." + SY.user.uid]: { n: SY.user.displayName || "", e: SY.user.email || "" } }).catch(() => { });
+  const sinceItems = Timestamp.fromMillis(Math.max(0, SY.lastPullItems - 60000));
+  const sinceImgs = Timestamp.fromMillis(Math.max(0, SY.lastPullImgs - 60000));
+  SY.unsub.push(onSnapshot(query(collection(cref, "items"), where("u", ">", sinceItems)), syPullItems, bad));
+  SY.unsub.push(onSnapshot(query(collection(cref, "imgs"), where("u", ">", sinceImgs)), syPullImgs, bad));
+  syncSoon(1500);
+}
+const delImgLocal = id => { delete SY.isig[id]; IMG.delete(id); dbWrite("img", s => s.delete(id)); };
+function syPullItems(snap) {
+  const byId = new Map(S.items.map(i => [i.id, i])), byKey = new Map();
+  S.items.forEach(i => { if (SY.sig[i.id] === undefined) byKey.set(idKey(i), i); });
+  let ch = false, maxU = SY.lastPullItems;
+  snap.docChanges().forEach(c => {
+    if (c.type === "removed") return;
+    const dd = c.doc, d = dd.data(); if (dd.metadata.hasPendingWrites || !d.u) return;
+    maxU = Math.max(maxU, d.u.toMillis());
+    const id = dd.id, loc = byId.get(id);
+    if (d.del) { if (loc) { S.items = S.items.filter(i => i.id !== id); byId.delete(id); delImgLocal(id); ch = true; } delete SY.sig[id]; delete SY.isig[id]; return; }
+    let it; try { it = JSON.parse(d.j); } catch (e) { return; }
+    coupleSync(it);
+    const s0 = sigOf(it);
+    if (loc) {
+      if (SY.sig[id] === undefined || sigOf(loc) !== SY.sig[id]) return; /* edição local ainda não enviada: vale a local */
+      S.items[S.items.indexOf(loc)] = it;
+    } else {
+      const k = idKey(it), dup = byKey.get(k);
+      if (dup) { fillMissing(it, dup); S.items = S.items.filter(i => i !== dup); byId.delete(dup.id); const im = IMG.get(dup.id); if (im && !IMG.has(id)) { IMG.set(id, im); dbWrite("img", s => s.put(im, id)); } delImgLocal(dup.id); byKey.delete(k); }
+      S.items.push(it);
+    }
+    byId.set(id, it); SY.sig[id] = s0; ch = true;
+  });
+  if (maxU > SY.lastPullItems) SY.lastPullItems = maxU;
+  syPersist(); SY.last = Date.now();
+  if (ch) { save(); attGC(); attFetchMissing(); syRender(); } else syUi();
+}
+function syPullImgs(snap) {
+  let ch = false, maxU = SY.lastPullImgs;
+  snap.docChanges().forEach(c => {
+    if (c.type === "removed") return;
+    const dd = c.doc, d = dd.data(); if (dd.metadata.hasPendingWrites || !d.u) return;
+    maxU = Math.max(maxU, d.u.toMillis());
+    const id = dd.id, cur = IMG.get(id);
+    if (d.del) { if (cur) { delImgLocal(id); ch = true; } delete SY.isig[id]; return; }
+    if (!d.d) return;
+    if (cur && SY.isig[id] !== imgSig(cur)) return; /* foto local ainda não enviada */
+    SY.isig[id] = imgSig(d.d); IMG.set(id, d.d); dbWrite("img", s => s.put(d.d, id)); ch = true;
+  });
+  if (maxU > SY.lastPullImgs) SY.lastPullImgs = maxU;
+  syPersist();
+  if (ch) syRender();
+}
+function syNamesIn() {
+  const c = SY.couple; if (!c || !c.names) return;
+  const ns = JSON.stringify(S.names), rs = JSON.stringify(c.names);
+  if (rs === ns) { SY.namesSig = ns; return; }
+  if (ns === SY.namesSig) { S.names = c.names; SY.namesSig = rs; save(); syRender(); } else syncSoon(1500);
+}
+let syTimer = null;
+function syncSoon(ms = 2500) { updateSyncBadge(); if (!SY.cid || !SY.user || !SY.F) return; clearTimeout(syTimer); syTimer = setTimeout(syPush, ms); }
+async function syPush() {
+  if (!SY.cid || !SY.user || !SY.F || SY.busy || !navigator.onLine) return;
+  SY.busy = true; SY.err = ""; updateSyncBadge();
+  try {
+    const { doc, writeBatch, serverTimestamp, updateDoc } = SY.F, fs = SY.fs, cid = SY.cid, byId = new Map(S.items.map(i => [i.id, i])), ops = [];
+    const refd = new Set();
+    for (const it of S.items) {
+      if (!syncable(it)) continue;
+      for (const a of (it.att || [])) {
+        refd.add(a.id); const d = ATT.get(a.id); if (!d || SY.aup[a.id] || d.length > AMAX) continue;
+        const c = Math.ceil(d.length / ACH), b = writeBatch(fs);
+        for (let n = 0; n < c; n++) b.set(doc(fs, "couples", cid, "files", a.id + "_" + n), { d: d.slice(n * ACH, (n + 1) * ACH), i: n, u: serverTimestamp() });
+        await b.commit();
+        SY.aup[a.id] = c;
+      }
+    }
+    for (const id of Object.keys(SY.aup)) if (!refd.has(id)) { const b = writeBatch(fs); for (let n = 0; n < SY.aup[id]; n++) b.delete(doc(fs, "couples", cid, "files", id + "_" + n)); b.commit().catch(() => { }); delete SY.aup[id]; }
+    for (const it of S.items) { if (!syncable(it)) continue; const h = sigOf(it); if (SY.sig[it.id] !== h) ops.push({ ref: doc(fs, "couples", cid, "items", it.id), data: { j: JSON.stringify(it), u: serverTimestamp(), by: SY.user.uid }, k: "sig", id: it.id, h }); }
+    for (const [id, d] of IMG) { const it = byId.get(id); if (!it || !syncable(it) || d.length > 900000) continue; const h = imgSig(d); if (SY.isig[id] !== h) ops.push({ ref: doc(fs, "couples", cid, "imgs", id), data: { d, u: serverTimestamp() }, k: "isig", id, h }); }
+    for (const id of Object.keys(SY.isig)) if (!IMG.has(id) && byId.has(id)) ops.push({ ref: doc(fs, "couples", cid, "imgs", id), data: { del: true, d: "", u: serverTimestamp() }, k: "isig", id, h: null });
+    for (let i = 0; i < ops.length; i += 300) {
+      const part = ops.slice(i, i + 300), b = writeBatch(fs);
+      part.forEach(o => b.set(o.ref, o.data));
+      await b.commit();
+      part.forEach(o => { if (o.k === "sig") SY.sig[o.id] = o.h; else if (o.h) SY.isig[o.id] = o.h; else delete SY.isig[o.id]; });
+    }
+    const ns = JSON.stringify(S.names);
+    if (SY.namesSig !== ns && SY.couple && JSON.stringify(SY.couple.names) !== ns) { await updateDoc(doc(fs, "couples", cid), { names: S.names }).catch(() => { }); }
+    SY.namesSig = ns;
+    SY.last = Date.now(); syPersist();
+  } catch (e) { SY.err = syErr(e); }
+  SY.busy = false; syUi();
+}
+function syncDelete(id) {
+  if (!SY.cid || !SY.user || !SY.F || SY.sig[id] === undefined) return;
+  const { doc, writeBatch, serverTimestamp } = SY.F, b = writeBatch(SY.fs);
+  b.set(doc(SY.fs, "couples", SY.cid, "items", id), { del: true, j: "", u: serverTimestamp(), by: SY.user.uid });
+  if (SY.isig[id] !== undefined) b.set(doc(SY.fs, "couples", SY.cid, "imgs", id), { del: true, d: "", u: serverTimestamp() });
+  b.commit().catch(() => { }); delete SY.sig[id]; delete SY.isig[id]; syPersist();
+}
+function syReset() { SY.sig = {}; SY.isig = {}; SY.aup = {}; SY.lastPullItems = 0; SY.lastPullImgs = 0; SY.namesSig = ""; syPersist(); }
+async function syIn() {
+  try { await syLoad(); const { GoogleAuthProvider, signInWithPopup } = SY.F; await signInWithPopup(SY.auth, new GoogleAuthProvider()); }
+  catch (e) { if (!/popup-closed|cancelled-popup/.test((e && e.code) || "")) { SY.err = syErr(e); syUi(); } }
+}
+async function syOut() { try { await SY.F.signOut(SY.auth); } catch (e) { } SY.msg = "Você saiu. Os dados continuam neste aparelho."; syUi(); }
+async function syCreate() {
+  try {
+    SY.err = ""; const { doc, collection, setDoc, serverTimestamp } = SY.F, fs = SY.fs, u = SY.user, ref = doc(collection(fs, "couples"));
+    await setDoc(ref, { members: [u.uid], names: S.names, createdAt: serverTimestamp(), v: 1 });
+    await setDoc(doc(fs, "users", u.uid), { cid: ref.id });
+    SY.namesSig = JSON.stringify(S.names);
+    await syStart(ref.id);
+  } catch (e) { SY.err = syErr(e); }
+  syUi();
+}
+async function syJoin(code) {
+  code = (code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  try {
+    SY.err = ""; if (!code) throw new Error("Digite o código do convite.");
+    const { doc, getDoc, updateDoc, setDoc, deleteDoc, arrayUnion } = SY.F, fs = SY.fs, u = SY.user;
+    const inv = await getDoc(doc(fs, "invites", code));
+    if (!inv.exists() || inv.data().exp < Date.now()) throw new Error("Convite inválido, usado ou vencido. Peça um novo.");
+    const cid = inv.data().cid;
+    SY.namesSig = JSON.stringify(S.names);
+    await updateDoc(doc(fs, "couples", cid), { members: arrayUnion(u.uid), invite: code });
+    await setDoc(doc(fs, "users", u.uid), { cid });
+    deleteDoc(doc(fs, "invites", code)).catch(() => { });
+    syClearInvite(); SY.msg = "Pronto! Vocês estão conectados.";
+    await syStart(cid);
+  } catch (e) { SY.err = syErr(e); syClearInvite(); }
+  syUi();
+}
+async function syInvite() {
+  try {
+    SY.err = ""; const { doc, setDoc } = SY.F, al = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", code = [...crypto.getRandomValues(new Uint8Array(8))].map(x => al[x % al.length]).join("");
+    await setDoc(doc(SY.fs, "invites", code), { cid: SY.cid, by: SY.user.uid, exp: Date.now() + 7 * 864e5 });
+    SY.invite = { code, url: location.origin + "/?convite=" + code }; syUi();
+    try { if (navigator.share) await navigator.share({ title: "Nós Dois", text: "Entre no nosso diário a dois:", url: SY.invite.url }); } catch (e) { }
+  } catch (e) { SY.err = syErr(e); syUi(); }
+}
+function syClearInvite() { SY.pendingInvite = ""; try { localStorage.removeItem("nd_invite"); } catch (e) { } }
+async function syBoot() {
+  const m = /[?&]convite=([A-Za-z0-9]+)/.exec(location.search);
+  if (m) { try { localStorage.setItem("nd_invite", m[1].toUpperCase()); } catch (e) { } try { history.replaceState(null, "", location.pathname); } catch (e) { } }
+  try { SY.pendingInvite = localStorage.getItem("nd_invite") || ""; } catch (e) { }
+  await syLoadState();
+  if (SY.pendingInvite) { go("ajustes", "syncCard"); toast("Convite recebido: entre com o Google para entrar no espaço do casal"); }
+  if (SY.cid || SY.pendingInvite) syLoad();
+}
+function syncCard() {
+  const u = SY.user, c = SY.couple, btn = (a, t, cls = "") => `<button class="btn ${cls}" data-act="${a}">${t}</button>`;
+  let b = "";
+  if (!SY.F) b = SY.err ? `<p class="muted">${esc(SY.err)}</p><div class="btns">${btn("syretry", "Tentar de novo", "primary")}</div>` : `<p class="muted">Preparando…</p>`;
+  else if (!u) b = `<p class="muted" style="font-size:14px">Cada um entra com a sua conta Google e os dois passam a ver o mesmo diário, nos dois celulares. Continua funcionando sem internet e sincroniza quando voltar.${SY.pendingInvite ? " <b>Você recebeu um convite:</b> entre para aceitar." : ""}</p><div class="btns">${btn("syin", "Entrar com Google", "primary")}</div>`;
+  else if (!SY.cid) b = `<p class="muted" style="font-size:14px">Conectado como <b>${esc(u.email || "")}</b>. Falta criar o espaço do casal ou entrar com um convite.</p><div class="btns">${btn("sycreate", "Criar nosso espaço", "primary")}</div><div class="fld" style="margin-top:14px"><label class="f" for="sycode">Recebeu um convite? Cole o código</label><div class="row2" style="gap:8px"><input type="text" id="sycode" data-sycode="1" autocapitalize="characters" placeholder="K7M2QX9P" value="${esc(SY.code)}">${btn("syjoin", "Entrar com convite")}</div></div>`;
+  else {
+    const ppl = c && c.people ? Object.values(c.people) : [], n = c && c.members ? c.members.length : 1;
+    let pend = 0; if (SY.F && ui.sec === "ajustes") for (const it of S.items) if (syncable(it) && SY.sig[it.id] !== sigOf(it)) pend++;
+    b = `<p style="font-size:14px;margin:0 0 6px">${n >= 2 ? "Conectados" : "Conectado"}: ${ppl.map(p => `<b>${esc(p.n || p.e)}</b>`).join(" e ") || `<b>${esc(u.email || "")}</b>`}</p>
+    <p class="muted" style="font-size:13px;margin:0">${n < 2 ? "Falta a outra pessoa: gere um convite abaixo. " : ""}${navigator.onLine ? (pend ? `${pend} alterações a enviar.` : "Tudo sincronizado.") : "Sem internet: sincroniza quando voltar."}${SY.last ? " Última troca " + new Date(SY.last).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + "." : ""}</p>
+    <div class="btns">${n < 2 ? btn("syinvite", "Convidar", "primary") : btn("syinvite", "Novo convite")}${btn("synow", "Sincronizar agora")}${btn("syout", "Sair")}</div>
+    ${SY.invite ? `<div class="out" style="margin-top:10px"><b>Link do convite</b> (vale 7 dias, uma pessoa só):<br><span style="overflow-wrap:anywhere">${esc(SY.invite.url)}</span><br>Código: <b>${esc(SY.invite.code)}</b><div class="btns" style="margin-top:8px">${btn("sycopy", "Copiar link")}</div></div>` : ""}`;
+  }
+  return `<div class="card2" id="syncCard"><h3>Sincronizar entre os dois</h3>${SY.msg ? `<p style="font-size:14px">${esc(SY.msg)}</p>` : ""}${SY.err && SY.F ? `<p class="warn" style="margin:8px 0">${esc(SY.err)}</p>` : ""}${b}<p class="attr">Fotos grandes demais e itens importados em lote que ninguém mexeu não sobem (dá para importar de novo em cada aparelho).</p></div>`;
+}
+
+/* ---------- agenda ---------- */
+function planRow(i, late, done) {
+  const im = IMG.get(i.id), d = toDate(i.date);
+  const th = im ? `<img class="thumb" src="${im}" alt="">` : phHTML(i, "thumb");
+  return `<div class="plan k-${kc(i)} ${late ? "late" : ""}" data-act="open" data-id="${i.id}" role="button" tabindex="0"><div class="dt"><b>${pad(d.getDate())}</b><span>${d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</span></div>${th}<div class="info"><b>${esc(i.title)}</b><small><span class="tag ${i.kind === "rest" ? "rest" : i.kind === "show" ? "show" : ""}">${i.kind === "filme" ? "Filme" : i.kind === "show" ? esc(i.etype || "Evento") : "Mesa"}</span>${late ? "Ficou para outra lua · " : ""}${esc([i.where, i.dateEnd && i.dateEnd > i.date ? "até " + fmtDate(i.dateEnd) : d.toLocaleDateString("pt-BR", { weekday: "short" })].filter(Boolean).join(" · "))}</small></div>${done ? (i.rating != null ? `<span class="tag" style="margin:0">★ ${fmt(i.rating)}</span>` : "") : `<button class="btn sm" data-act="concluir" data-id="${i.id}">${ico("check", 15)} ${i.kind === "filme" ? "Vimos" : "Fomos"}</button>`}</div>`;
+}
+function wishRow(i) {
+  const im = IMG.get(i.id);
+  const th = im ? `<img class="thumb" src="${im}" alt="">` : phHTML(i, "thumb");
+  return `<div class="plan k-${kc(i)}" data-act="open" data-id="${i.id}" role="button" tabindex="0">${th}<div class="info"><b>${esc(i.title)}</b><small>${esc([i.kind === "filme" ? i.year : i.kind === "show" ? i.etype : i.cuisine, i.where].filter(Boolean).join(" · ") || "Sem data")}</small></div><button class="btn sm" data-act="agendar" data-id="${i.id}">Agendar</button></div>`;
+}
+function calHTML() {
+  const A = ui.ag, today = todayStr(); if (!A.m) A.m = today.slice(0, 7);
+  const [y, m] = A.m.split("-").map(Number), first = new Date(y, m - 1, 1), dim = new Date(y, m, 0).getDate(), rows = Math.ceil((first.getDay() + dim) / 7);
+  const by = {}; S.items.forEach(i => { if (!i.date) return; let ds = i.date, n = 0; do { (by[ds] = by[ds] || []).push(i); const dd = toDate(ds); dd.setDate(dd.getDate() + 1); ds = isoDate(dd); } while (i.dateEnd && ds <= i.dateEnd && ++n < 14); });
+  const wds = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"].map(w => `<div class="cwd">${w}</div>`).join(""); let cells = "";
+  for (let k = 0; k < rows * 7; k++) {
+    const d = new Date(y, m - 1, 1 - first.getDay() + k), ds = isoDate(d), out = d.getMonth() !== m - 1;
+    const list = (by[ds] || []).slice().sort((a, b) => (a.status === b.status ? 0 : a.status === "visto" ? -1 : 1) || a.title.localeCompare(b.title, "pt-BR"));
+    const dots = list.slice(0, 4).map(i => `<i class="cdot ${kcs(i)} ${i.status === "quero" ? "q" : ""}"></i>`).join("");
+    const tt = list.slice(0, 2).map(i => `<span class="${kcs(i)} ${i.status === "quero" ? "q" : ""}">${esc(i.title)}</span>`).join("") + (list.length > 2 ? `<em>+${list.length - 2}</em>` : "");
+    const lb = d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" }) + (list.length ? ", " + list.length + (list.length === 1 ? " registro" : " registros") : "");
+    cells += `<button type="button" class="cd ${out ? "cdo" : ""} ${ds === today ? "today" : ""}" data-act="agday" data-d="${ds}" aria-pressed="${A.d === ds}" aria-label="${lb}"><b>${d.getDate()}</b><span class="cdots">${dots}</span><span class="ctt">${tt}</span></button>`;
+  }
+  let det = "";
+  if (A.d) {
+    const day = (by[A.d] || []).slice().sort((a, b) => (a.status === b.status ? 0 : a.status === "visto" ? -1 : 1)), dd = toDate(A.d);
+    det = `<div id="agdet"><h3 class="mon dd" style="margin-top:6px">${dd.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</h3>` +
+      (day.length ? day.map(i => planRow(i, i.status === "quero" && A.d < today, i.status === "visto")).join("") : `<p class="muted" style="font-size:14px;margin-bottom:10px">Nada neste dia.</p>`) +
+      `<button class="btn sm" data-act="agadd" data-d="${A.d}">${ico("plus", 15)} Programar neste dia</button></div>`;
+  }
+  return `<div class="cal"><div class="calh"><h3>${first.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</h3><div class="nv"><button class="btn sm" data-act="agnav" data-n="-1" aria-label="Mês anterior">‹</button><button class="btn sm" data-act="agnav" data-n="0">Hoje</button><button class="btn sm" data-act="agnav" data-n="1" aria-label="Próximo mês">›</button></div></div><div class="cgrid">${wds}</div><div class="cgrid dd">${cells}</div>
+  <div class="cleg"><span><i></i>Filme</span><span><i class="r"></i>Mesa</span><span><i class="s"></i>Evento</span><span><i class="q"></i>Programado (ainda por vir)</span><span>Cheio = já fomos/vimos</span></div></div>${det}`;
+}
+function viewAgenda() {
+  const today = todayStr(), A = ui.ag;
+  const plan = S.items.filter(i => i.status === "quero" && i.date).sort((a, b) => a.date.localeCompare(b.date));
+  const late = plan.filter(i => i.date < today), next = plan.filter(i => i.date >= today);
+  const wish = S.items.filter(i => i.status === "quero" && !i.date && (i.kind !== "filme" || i.want));
+  const groups = {};
+  next.forEach(i => (groups[i.date.slice(0, 7)] = groups[i.date.slice(0, 7)] || []).push(i));
+  let h = `<div class="agw"><div class="head"><div><h1>Agenda</h1><p class="sub">O que vem por aí, a dois.</p></div><div class="btnrow"><button class="btn" data-act="txopen" data-tab="cartaz">Em cartaz</button><button class="btn primary desk" data-act="add">${ico("plus", 18)} Programar</button></div></div>
+  <div class="agbar"><div class="seg"><button class="chip" data-act="agview" data-v="lista" aria-pressed="${A.view !== "cal"}">Lista</button><button class="chip" data-act="agview" data-v="cal" aria-pressed="${A.view === "cal"}">Calendário</button></div></div>`;
+  if (A.view === "cal") return h + calHTML() + `</div>`;
+  if (late.length) h += `<h3 class="mon">Ficaram para outra lua</h3>` + late.map(i => planRow(i, true)).join("");
+  if (next.length) h += Object.keys(groups).sort().map(m => `<h3 class="mon dd">${toDate(m + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</h3>` + groups[m].map(i => planRow(i)).join("")).join("");
+  else if (!late.length) h += `<div class="empty"><h2>Nada programado</h2><p class="muted">Marquem um cinema, uma sessão em casa ou aquele jantar.</p><div class="acts"><button class="btn primary" data-act="add">Programar agora</button></div></div>`;
+  const wf = wish.filter(i => i.kind === "filme"), wr = wish.filter(i => i.kind === "rest"), ws = wish.filter(i => i.kind === "show");
+  if (wish.length) h += `<div class="sechead"><h2>Lista de desejos</h2><span class="muted" style="font-size:13px">sem data definida</span></div><div class="two"><div>${wf.length ? `<h3 style="margin-bottom:10px">Filmes</h3>` + wf.slice(0, 40).map(wishRow).join("") + (wf.length > 40 ? `<p class="muted" style="font-size:13px">+ ${wf.length - 40} na aba Filmes › Queremos ver</p>` : "") : ""}</div><div>${wr.length ? `<h3 style="margin-bottom:10px">Restaurantes</h3>` + wr.map(wishRow).join("") : ""}${ws.length ? `<h3 style="margin:14px 0 10px">Eventos</h3>` + ws.map(wishRow).join("") : ""}</div></div>`;
+  return h + `</div>`;
+}
+
+/* ---------- importar restaurantes de Curitiba (OpenStreetMap) ---------- */
+const OSM_MIRRORS = ["https://overpass-api.de", "https://overpass.private.coffee", "https://overpass.kumi.systems", "https://maps.mail.ru/osm/tools/overpass"];
+const OSM_BBOX = [-25.6436, -49.3892, -25.3450, -49.1843]; /* sul, oeste, norte, leste */
+const OSM_TYPES = { rest: ["restaurant", "Restaurantes"], cafe: ["cafe", "Cafés e padarias"], fast: ["fast_food", "Fast-food e lanchonetes"], bar: ["bar|pub|biergarten", "Bares e pubs"], sorv: ["ice_cream", "Sorveterias"], praca: ["food_court", "Praças de alimentação"] };
+const osmOut = h => { ui.osm = h; const e = $("#osmOut"); if (e) { e.hidden = false; e.innerHTML = h; } };
+let osmBusy = false, osmStop = false;
+/* ---------- buscar um restaurante pelo nome no OpenStreetMap (cadastro e Ajustes) ---------- */
+const OSM_AMEN = "restaurant|cafe|bar|pub|fast_food|ice_cream|food_court|biergarten";
+let OSMF = null;
+const osmRx = n => { const m = { a: "aáàâãä", e: "eéèêë", i: "iíìîï", o: "oóòôõö", u: "uúùûü", c: "cç" }; return norm(n).split(" ").filter(Boolean).map(w => w.split("").map(ch => m[ch] ? "[" + m[ch] + m[ch].toUpperCase() + "]" : ch).join("")).join(".*"); };
+async function osmFind(name) {
+  const rx = osmRx(name), [S0, W0, N0, E0] = OSM_BBOX, q = `[out:json][timeout:25];nwr["name"~"${rx}",i]["amenity"~"^(${OSM_AMEN})$"](${S0},${W0},${N0},${E0});out tags center 40;`;
+  let last = "";
+  for (const m of OSM_MIRRORS) {
+    try {
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(m + "/api/interpreter", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q), signal: ctl.signal });
+      clearTimeout(to);
+      if (r.ok) { const j = await r.json(); if (j && j.elements) return j.elements; }
+      last = "erro " + r.status;
+    } catch (e) { last = e.name === "AbortError" ? "demorou demais" : "sem resposta"; }
+  }
+  throw new Error(last);
+}
+function osmHits(els, name) {
+  const n = norm(name);
+  return els.filter(e => e.tags && e.tags.name).map(e => { const t = e.tags, x = e.lon ?? (e.center && e.center.lon), y = e.lat ?? (e.center && e.center.lat), nn = norm(t.name); return { e, t, x, y, sc: nn === n ? 0 : nn.startsWith(n) ? 1 : 2 }; })
+    .filter(h => h.x != null && !(h.t["addr:city"] && norm(h.t["addr:city"]) !== "curitiba")).sort((a, b) => a.sc - b.sc || a.t.name.length - b.t.name.length).slice(0, 8);
+}
+function osmFindInner(ctx) {
+  const o = OSMF && OSMF.ctx === ctx ? OSMF : null, have = new Set(S.items.filter(i => i.osm).map(i => i.osm.id));
+  const hits = o ? o.hits.map((h, i) => {
+    const t = h.t, ad = [[t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(", "), t["addr:suburb"] || t["addr:neighbourhood"]].filter(Boolean).join(" — ");
+    const sub = [osmCuisine(t), ad, t.opening_hours ? "com horário" : ""].filter(Boolean).join(" · "), dup = ctx === "cfg" && have.has(h.e.type + "/" + h.e.id);
+    return `<button type="button" class="osmhit" data-act="${ctx === "ed" ? "osmpick" : "osmadd"}" data-i="${i}" ${dup ? "disabled" : ""}><b>${esc(t.name)}</b><small>${esc(sub || "sem detalhes no mapa")}</small>${dup ? "<small>já está na sua lista</small>" : ""}</button>`;
+  }).join("") : "";
+  return `<button type="button" class="btn sm" data-act="${ctx === "ed" ? "osmfind" : "osmsearch"}" ${o && o.busy ? "disabled" : ""}>${ico("search", 15)} ${o && o.busy ? "Buscando…" : "Buscar no OpenStreetMap"}</button>${o && o.err ? `<p class="hintp" style="margin:8px 0 0">${esc(o.err)}</p>` : ""}${hits ? `<p class="hintp" style="margin:8px 0 4px">Toque no certo para preencher o cadastro:</p><div class="osmhits">${hits}</div>` : ""}`;
+}
+function osmFindPaint() { const e = $(OSMF && OSMF.ctx === "ed" ? "#osmFind" : "#osmNameOut"); if (e) e.innerHTML = osmFindInner(OSMF.ctx); }
+async function osmSearch(ctx) {
+  const name = (($(ctx === "ed" ? "#f_title" : "#osmName") || {}).value || "").trim();
+  if (name.length < 3) { toast("Digite pelo menos 3 letras do nome"); return; }
+  OSMF = { ctx, q: name, busy: true, hits: [], err: "" }; osmFindPaint();
+  try { OSMF.hits = osmHits(await osmFind(name), name); if (!OSMF.hits.length) OSMF.err = "Nada encontrado com esse nome em Curitiba. Confira a grafia ou preencha à mão."; }
+  catch (e) { OSMF.err = "Não consegui consultar o OpenStreetMap agora (" + e.message + "). Tente de novo em instantes."; }
+  OSMF.busy = false; osmFindPaint();
+}
+async function osmBairroFix(it, done) {
+  if (!it.osm || it.osm.bairro || it.osm.lat == null) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&addressdetails=1&accept-language=pt-BR&lat=${it.osm.lat}&lon=${it.osm.lon}`);
+    if (!r.ok) return; const a = ((await r.json()) || {}).address || {}, b = a.suburb || a.neighbourhood || a.city_district || "";
+    if (b) { it.osm.bairro = b; if (!it.where || it.where === "Curitiba") it.where = b; done && done(b); }
+  } catch (e) { }
+}
+function osmPick(i) {
+  const h = OSMF && OSMF.hits[i]; if (!h || !ED) return;
+  const it0 = osmItem(h.e, h.t, h.x, h.y, [], ""), known = [...places().values()].find(p => p.osm && p.osm.id === it0.osm.id);
+  readForm();
+  if (known && ED.isNew) { OSMF = null; $("#f_title").value = known.title; placeAutofill(); return; }
+  const it = ED.it; it.title = it0.title; it.cuisine = (it0.cuisine || "").split(",")[0].trim() || it.cuisine; it.where = it0.where; it.hr = it0.osm.hr || it.hr; it.osm = it0.osm;
+  ED.filled = "Dados importados do OpenStreetMap. Confira e complete o preço."; OSMF = null; drawEditor();
+  osmBairroFix(it, b => { const w = $("#f_where"); if (ED && ED.it === it && w && (!w.value || w.value === "Curitiba")) w.value = b; });
+}
+function osmAdd(i) {
+  const h = OSMF && OSMF.hits[i]; if (!h) return;
+  const it = osmItem(h.e, h.t, h.x, h.y, [], ""); if (S.items.some(x => x.osm && x.osm.id === it.osm.id)) { toast("Já está na sua lista"); return; }
+  it.edited = true; S.items.push(it); save(); osmFindPaint(); toast(`${it.title} entrou em Mesa › Quero ir`);
+  osmBairroFix(it, () => save());
+}
+function osmCard() {
+  const f = ui.osf, chk = (k, l) => `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" data-osf="${k}" ${f[k] ? "checked" : ""}> ${l}</label>`;
+  return `<div class="card2" id="sec-imp-osm"><h3>Importar restaurantes de Curitiba (OpenStreetMap)</h3><p class="muted" style="font-size:14px">Traz os lugares de comer e beber mapeados em Curitiba, com endereço, bairro, cozinha, telefone, site, Instagram, horário e comodidades quando existem. Eles entram em “Quero ir”, sem nota. Pode importar de novo: nada é duplicado. Leva alguns minutos e depende dos servidores públicos do OpenStreetMap, que às vezes ficam lentos.</p>
+  <div class="fld" style="margin-top:12px"><label class="f" for="osmName">Buscar um restaurante pelo nome</label><input type="search" id="osmName" placeholder="ex.: Madalosso" autocomplete="off"><div id="osmNameOut" style="margin-top:8px">${osmFindInner("cfg")}</div></div>
+  <p class="muted" style="font-size:14px;margin-top:14px">Ou importe a cidade inteira:</p>
+  <div style="margin-top:6px">${Object.keys(OSM_TYPES).map(k => chk(k, OSM_TYPES[k][1])).join("")}</div>
+  <div class="btns"><button class="btn primary" data-act="osmrun">Importar Curitiba</button><button class="btn" data-act="osmcancel">Parar</button><button class="btn danger" style="border:1px solid var(--danger)" data-act="osmundo">Desfazer a última importação</button></div>
+  <div class="out" id="osmOut" ${ui.osm ? "" : "hidden"}>${ui.osm || ""}</div>
+  <p class="attr">Dados © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (licença ODbL).</p></div>`;
+}
+async function osmQuery(q) {
+  let last = "";
+  for (let round = 0; round < 3 && !osmStop; round++) {
+    for (const m of OSM_MIRRORS) {
+      if (osmStop) break;
+      const nome = m.replace("https://", "").split("/")[0];
+      try {
+        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 150000);
+        const r = await fetch(m + "/api/interpreter", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(q), signal: ctl.signal });
+        clearTimeout(to);
+        if (r.ok) { const j = await r.json(); if (j && j.elements && !(j.remark && /error|timed out/i.test(j.remark))) return j.elements; last = nome + " (resposta incompleta)"; }
+        else last = nome + " (erro " + r.status + ")";
+      } catch (e) { last = nome + (e.name === "AbortError" ? " (demorou demais)" : " (sem resposta)"); }
+    }
+    if (!osmStop) await sleep(2500 * (round + 1));
+  }
+  throw new Error(osmStop ? "parado" : "os servidores do OpenStreetMap não responderam: " + last);
+}
+async function osmBoundary() {
+  try {
+    const r = await fetch("https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent("Curitiba, Paraná, Brasil") + "&featuretype=city&format=jsonv2&polygon_geojson=1&polygon_threshold=0.0003&limit=1&accept-language=pt-BR");
+    const j = await r.json(), g = j[0] && j[0].geojson;
+    return g && /Polygon/.test(g.type) ? g : null;
+  } catch (e) { return null; }
+}
+const geoPolys = g => g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+function inRing(x, y, ring) { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const a = ring[i], b = ring[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; }
+function inGeo(x, y, g) { return geoPolys(g).some(p => inRing(x, y, p[0]) && !p.slice(1).some(h => inRing(x, y, h))); }
+function stitch(ways) {
+  const segs = ways.filter(w => w.length > 1).map(w => w.map(p => [p.lon, p.lat])), rings = [], eq = (a, b) => a[0] === b[0] && a[1] === b[1];
+  while (segs.length) {
+    let cur = segs.pop(), grew = true;
+    while (grew && !eq(cur[0], cur[cur.length - 1])) {
+      grew = false;
+      for (let i = 0; i < segs.length; i++) {
+        const s = segs[i], e = cur[cur.length - 1];
+        if (eq(s[0], e)) cur = cur.concat(s.slice(1)); else if (eq(s[s.length - 1], e)) cur = cur.concat(s.slice().reverse().slice(1)); else continue;
+        segs.splice(i, 1); grew = true; break;
+      }
+    }
+    if (cur.length > 3) rings.push(cur);
+  }
+  return rings;
+}
+async function osmBairros(city) {
+  try {
+    const els = await osmQuery(`[out:json][timeout:120];rel["boundary"="administrative"]["admin_level"="10"](${OSM_BBOX.join(",")});out geom;`), out = [];
+    for (const e of els) {
+      if (e.type !== "relation" || !e.tags || !e.tags.name) continue;
+      const rings = stitch((e.members || []).filter(m => m.type === "way" && m.role !== "inner" && m.geometry).map(m => m.geometry));
+      if (!rings.length) continue;
+      const b = e.bounds || { minlon: Math.min(...rings[0].map(p => p[0])), maxlon: Math.max(...rings[0].map(p => p[0])), minlat: Math.min(...rings[0].map(p => p[1])), maxlat: Math.max(...rings[0].map(p => p[1])) };
+      if (city && !inGeo((b.minlon + b.maxlon) / 2, (b.minlat + b.maxlat) / 2, city) && !inGeo(rings[0][0][0], rings[0][0][1], city)) continue;
+      out.push({ name: e.tags.name, rings, b });
+    }
+    return out;
+  } catch (e) { return []; }
+}
+const bairroDe = (bairros, x, y) => { const b = bairros.find(z => x >= z.b.minlon && x <= z.b.maxlon && y >= z.b.minlat && y <= z.b.maxlat && z.rings.some(r => inRing(x, y, r))); return b ? b.name : ""; };
+function osmItem(e, t, x, y, bairros, batch) {
+  const suburb = t["addr:suburb"] || t["addr:neighbourhood"] || "", bairro = suburb || bairroDe(bairros, x, y);
+  const ig = (t["contact:instagram"] || t.instagram || "").trim(), web = (t.website || t["contact:website"] || t.url || "").trim();
+  const ad = [[t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(", "), bairro, t["addr:postcode"]].filter(Boolean).join(" — ");
+  const it = newItem("rest", { title: t.name.trim(), cuisine: osmCuisine(t), where: bairro || "Curitiba", status: "quero", src: "osm", impOsm: batch });
+  it.osm = {
+    id: e.type + "/" + e.id, a: t.amenity, lat: Math.round(y * 1e6) / 1e6, lon: Math.round(x * 1e6) / 1e6, bairro, ad,
+    ph: (t.phone || t["contact:phone"] || t["contact:mobile"] || "").split(";")[0].trim(),
+    web: /^https?:\/\//i.test(web) ? web : (web ? "https://" + web : ""),
+    ig: ig ? (/^https?:\/\//i.test(ig) ? ig : "https://instagram.com/" + ig.replace(/^@/, "")) : "",
+    hr: t.opening_hours || "", fl: osmFlags(t), br: t.brand || "", op: t.operator || "", ds: t["description:pt"] || t.description || ""
+  };
+  return it;
+}
+async function osmRun() {
+  if (osmBusy) return;
+  const f = ui.osf, am = Object.keys(OSM_TYPES).filter(k => f[k]).map(k => OSM_TYPES[k][0]).join("|");
+  if (!am) return osmOut("Marque pelo menos um tipo de lugar.");
+  osmBusy = true; osmStop = false;
+  const batch = "osm-" + Date.now();
+  try {
+    osmOut("Buscando o contorno de Curitiba…");
+    const city = await osmBoundary();
+    osmOut((city ? "Contorno de Curitiba ok." : "Sem o contorno oficial: uso a área retangular e o endereço para filtrar.") + " Buscando os bairros…");
+    const bairros = await osmBairros(city);
+    const [S0, W0, N0, E0] = OSM_BBOX, G = 3, seen = new Map();
+    for (let i = 0; i < G && !osmStop; i++) for (let k = 0; k < G && !osmStop; k++) {
+      const n = i * G + k + 1, bb = [S0 + (N0 - S0) * i / G, W0 + (E0 - W0) * k / G, S0 + (N0 - S0) * (i + 1) / G, W0 + (E0 - W0) * (k + 1) / G].map(v => v.toFixed(5)).join(",");
+      osmOut(`${bairros.length ? bairros.length + " bairros identificados. " : "Bairros indisponíveis (uso só o endereço do OpenStreetMap). "}Baixando o mapa… parte ${n} de ${G * G}: ${seen.size} lugares até agora.`);
+      const els = await osmQuery(`[out:json][timeout:90];nwr["amenity"~"^(${am})$"](${bb});out tags center;`);
+      els.forEach(e => seen.set(e.type + "/" + e.id, e));
+    }
+    if (osmStop) { osmOut(`Interrompido antes de terminar. Nada foi importado (${seen.size} lugares baixados). Rode de novo para continuar.`); osmBusy = false; return; }
+    const have = new Set(S.items.filter(i => i.osm).map(i => i.osm.id)), manual = new Set(S.items.filter(i => i.kind === "rest" && !i.osm).map(i => norm(i.title)));
+    const st = { add: 0, dup: 0, fora: 0, semNome: 0, bairro: 0, tel: 0, hr: 0, web: 0, ig: 0, cuis: 0 };
+    for (const e of seen.values()) {
+      const t = e.tags || {}; if (!t.name || !t.name.trim()) { st.semNome++; continue; }
+      const x = e.lon ?? (e.center && e.center.lon), y = e.lat ?? (e.center && e.center.lat); if (x == null || y == null) continue;
+      if (city ? !inGeo(x, y, city) : (t["addr:city"] && norm(t["addr:city"]) !== "curitiba")) { st.fora++; continue; }
+      if (have.has(e.type + "/" + e.id) || manual.has(norm(t.name))) { st.dup++; continue; }
+      const it = osmItem(e, t, x, y, bairros, batch); S.items.push(it); st.add++;
+      if (it.osm.bairro) st.bairro++; if (it.osm.ph) st.tel++; if (it.osm.hr) st.hr++; if (it.osm.web) st.web++; if (it.osm.ig) st.ig++; if (t.cuisine) st.cuis++;
+    }
+    S.lastOsm = batch; save();
+    osmOut(`<b>Concluído.</b> ${st.add.toLocaleString("pt-BR")} lugares importados para Mesa › Quero ir. Com bairro: ${st.bairro}, cozinha: ${st.cuis}, telefone: ${st.tel}, horário: ${st.hr}, site: ${st.web}, Instagram: ${st.ig}. Ignorados: ${st.dup} já existentes, ${st.semNome} sem nome, ${st.fora} fora de Curitiba.`);
+    render();
+  } catch (e) { osmOut(`Não consegui terminar (${esc(e.message || e)}). Tente de novo em alguns minutos; nada foi importado.`); }
+  osmBusy = false;
+}
+async function osmUndo() {
+  const rm = S.items.filter(i => S.lastOsm && i.impOsm === S.lastOsm && !i.edited && i.status === "quero");
+  if (!rm.length) return toast("Nada da última importação para desfazer");
+  if (!(await askConfirm(`${rm.length} lugares da última importação (que vocês não alteraram) serão removidos.`, "Desfazer"))) return;
+  const ids = new Set(rm.map(i => i.id)); rm.forEach(i => delImg(i.id));
+  S.items = S.items.filter(i => !ids.has(i.id)); save(); osmOut(`${rm.length} lugares removidos.`); render();
+}
+const OSM_DIAS = { Mo: "Seg", Tu: "Ter", We: "Qua", Th: "Qui", Fr: "Sex", Sa: "Sáb", Su: "Dom", PH: "Feriados", off: "fechado" };
+function osmInfoHTML(it) {
+  const o = it.osm; if (!o) return "";
+  const row = (l, v) => v ? `<div style="display:flex;gap:10px;margin:5px 0;font-size:14px"><b style="min-width:76px;flex:none">${l}</b><span style="min-width:0;overflow-wrap:anywhere">${v}</span></div>` : "";
+  const a = (h, t) => { const u = safeUrl(h); return u ? `<a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accT)">${esc(t)}</a>` : esc(t); };
+  const maps = o.lat != null ? a(`https://www.google.com/maps/search/?api=1&query=${o.lat},${o.lon}`, "Abrir no mapa") : "";
+  const tel = o.ph ? `<a href="tel:${esc(o.ph.replace(/[^\d+]/g, ""))}" style="color:var(--accT)">${esc(o.ph)}</a>` : "";
+  const hr = o.hr ? esc(o.hr).replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH|off)\b/g, m => OSM_DIAS[m]) : "";
+  return `<div class="card2" style="margin:0 0 14px;padding:12px 14px"><p class="eyebrow" style="margin:0 0 6px">Sobre o lugar</p>${row("Endereço", esc(o.ad || ""))}${row("Mapa", maps)}${row("Telefone", tel)}${row("Site", o.web ? a(o.web, o.web.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")) : "")}${row("Instagram", o.ig ? a(o.ig, o.ig.replace(/^https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")) : "")}${row("Horário", hr)}${row("Comodidades", (o.fl || []).map(x => `<span class="pchip">${esc(x)}</span>`).join(""))}${row("Rede", esc(o.br || o.op || ""))}${row("Sobre", esc(o.ds || ""))}<p class="attr" style="margin:8px 0 0">Dados © colaboradores do <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL). Podem estar desatualizados.</p></div>`;
+}
+
+/* ---------- ajustes ---------- */
+function viewAjustes() {
+  return `<div class="head"><div><h1>Ajustes</h1><p class="sub" id="devInfo" style="font-size:12px">${esc(DEV.info || "")}</p></div></div>
+  ${storageOk ? "" : '<div class="warn"><b>Armazenamento indisponível neste modo.</b> O que você registrar pode se perder ao fechar a página. Baixe um backup com frequência.</div>'}
+  ${(() => { if (!SY.F && !SY.loading) syLoad(); return syncCard(); })()}
+  <div class="card2"><h3>Quem somos</h3><div class="row2" style="margin-top:10px"><div><input type="text" id="nA" aria-label="Seu nome" value="${esc(S.names[0])}"></div><div><input type="text" id="nB" aria-label="Nome dela" value="${esc(S.names[1])}"></div></div></div>
+  <div class="card2" id="sec-imp"><h3>Importar do Letterboxd</h3><p class="muted" style="font-size:14px">No Letterboxd: <b>Settings › Data › Export your data</b>. Escolha o arquivo <b>.zip</b> inteiro (ou os CSVs <i>watched, ratings, diary, watchlist, reviews</i>). Pode importar de novo quando quiser: nada é duplicado e as notas de vocês nunca são sobrescritas.</p>
+  <div class="btns"><button class="btn primary" data-act="pick" data-in="fLB">Escolher ZIP ou CSVs</button></div><input type="file" id="fLB" accept=".zip,.csv" multiple hidden>${ui.imp ? `<div class="out">${ui.imp}</div>` : ""}</div>
+  ${imCard()}
+  ${osmCard()}
+  <div class="card2"><h3>Catálogo: melhores filmes de 2010 a 2026</h3><p class="muted" style="font-size:14px">${CATALOG.length} filmes do ranking de maior nota média do Letterboxd (Top 250 dos anos 2010 e 2020, posição de out/2026), com título em português, ano de lançamento, diretor e gênero. Entram em “Quero ver”. Os que você já importou do Letterboxd só ganham os dados que faltam.</p>
+  <div class="btns"><button class="btn primary" data-act="catalog">Atualizar catálogo</button><button class="btn" data-act="catalogrm">Remover itens do catálogo que não mexi</button></div>${ui.cat ? `<div class="out">${ui.cat}</div>` : ""}</div>
+  <div class="card2" id="sec-tmdb"><h3>TMDB: pôsteres, fichas e descoberta</h3><p class="muted" style="font-size:14px">Com uma chave gratuita (themoviedb.org › Configurações › API), o app busca qualquer filme: pôster em português, sinopse, elenco, equipe, duração, classificação, onde assistir no Brasil, trailer e mais. Também mostra o que está em cartaz, sugere filmes parecidos com os que vocês amaram e deixa explorar a filmografia de um diretor ou ator.</p>
+  <div class="fld" style="margin-top:12px"><label class="f" for="tkey">Chave da API (v3) ou token (v4)</label><input type="password" id="tkey" autocomplete="off" value="${esc(TMDBKEY)}" placeholder="cole aqui"></div>
+  <div class="btns"><button class="btn primary" data-act="txopen" data-tab="buscar">Explorar o TMDB</button><button class="btn" data-act="tmdb">Completar o que falta nos meus filmes</button><button class="btn" data-act="tmdball">Atualizar todos</button></div>${ui.tmdb ? `<div class="out" id="tmdbOut">${ui.tmdb}</div>` : '<div class="out" id="tmdbOut" hidden></div>'}
+  <p class="attr">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. Dados de streaming: JustWatch. A chave fica só neste aparelho.</p></div>
+  <div class="card2"><h3>Pôsteres e fotos em lote</h3><p class="muted" style="font-size:14px">O export do Letterboxd <b>não traz imagens</b>. Selecione várias imagens de uma vez: o app liga cada uma ao título pelo nome do arquivo (ex.: <i>Parasita (2019).jpg</i> ou <i>Cantina do Zé.png</i>). Também dá para adicionar a foto de cada item ao editá-lo.</p>
+  <div class="btns"><button class="btn" data-act="pick" data-in="fPst">Escolher imagens</button></div><input type="file" id="fPst" accept="image/*" multiple hidden>${ui.pst ? `<div class="out">${ui.pst}</div>` : ""}</div>
+  <div class="card2"><h3>Backup</h3><p class="muted" style="font-size:14px">O arquivo JSON inclui registros, notas, fotos e o tema escolhido. A planilha CSV serve para abrir no Excel ou Google Planilhas.</p>
+  <div class="btns"><button class="btn primary" data-act="backup">Baixar backup (.json)</button><button class="btn" data-act="csv">Exportar planilha (.csv)</button><button class="btn" data-act="pick" data-in="fRs">Restaurar backup</button></div><input type="file" id="fRs" accept=".json" hidden></div>
+  <div class="card2"><h3>Zona de perigo</h3><p class="muted" style="font-size:14px">Apaga todos os registros e fotos deste aparelho.</p><div class="btns"><button class="btn danger" style="border:1px solid var(--danger)" data-act="wipe">Apagar tudo</button></div></div>`;
+}
+
+/* ---------- importação Letterboxd ---------- */
+function classify(name, rows, add) {
+  const n = name.toLowerCase(), h = rows[0] || {};
+  let k = null;
+  if (n.includes("watchlist")) k = "watchlist"; else if (n.includes("diary")) k = "diary"; else if (n.includes("ratings")) k = "ratings"; else if (n.includes("reviews")) k = "reviews"; else if (n.includes("watched")) k = "watched";
+  else if ("watched date" in h) k = "diary"; else if ("review" in h) k = "reviews"; else if ("rating" in h && "name" in h) k = "ratings";
+  if (k && rows.length) add(k, rows);
+}
+function importLB(d) {
+  const idx = new Map(); S.items.filter(i => i.kind === "filme").forEach(i => { idx.set(keyOf(i.title, i.year), i); if (i.orig) idx.set(keyOf(i.orig, i.year), i); });
+  const touched = new Set(); let created = 0, wl = 0;
+  const get = (r, status) => {
+    const title = (r.name || "").trim(); if (!title) return null;
+    const year = (r.year || "").trim(), k = keyOf(title, year); let it = idx.get(k);
+    if (!it) { it = newItem("filme", { title, year, status, want: status === "quero", src: "letterboxd", orig: title, lbUri: r["letterboxd uri"] || "" }); S.items.push(it); idx.set(k, it); created++; if (status === "quero") wl++; }
+    else { touched.add(it.id); if (!it.lbUri && r["letterboxd uri"]) it.lbUri = r["letterboxd uri"]; }
+    return it;
+  };
+  (d.watchlist || []).forEach(r => get(r, "quero"));
+  (d.watched || []).forEach(r => { const it = get(r, "visto"); if (it && it.status === "quero") it.status = "visto"; });
+  (d.ratings || []).forEach(r => { const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto"; const n = parseFloat(r.rating); if (n) it.lbRating = n; });
+  const last = {};
+  (d.diary || []).forEach(r => {
+    const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto";
+    const n = parseFloat(r.rating); if (n) it.lbRating = n;
+    const wd = r["watched date"] || r.date; if (wd && (!last[it.id] || wd > last[it.id])) last[it.id] = wd;
+    if (r.tags) it.tags = [...new Set([...(it.tags || []), ...r.tags.split(/[,;]/).map(x => x.trim()).filter(Boolean)])];
+  });
+  Object.keys(last).forEach(id => { const it = S.items.find(x => x.id === id); if (it && (!it.date || !it.edited)) it.date = last[id]; });
+  (d.reviews || []).forEach(r => { const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto"; const n = parseFloat(r.rating); if (n && !it.lbRating) it.lbRating = n; if (!it.notes && r.review) it.notes = stripHtml(r.review); });
+  return { created, updated: [...touched].length, wl };
+}
+let JSZIP = null;
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  if (JSZIP) return JSZIP;
+  JSZIP = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    sc.onload = () => window.JSZip ? res(window.JSZip) : rej(new Error("O leitor de ZIP não carregou. Envie os arquivos CSV direto."));
+    sc.onerror = () => { JSZIP = null; rej(new Error("O leitor de ZIP não carregou. Verifique a conexão ou envie os arquivos CSV direto.")); };
+    document.head.appendChild(sc);
+  });
+  return JSZIP;
+}
+async function handleImport(files) {
+  const out = {}, add = (k, rows) => (out[k] = out[k] || []).push(...rows);
+  try {
+    for (const f of files) {
+      const n = f.name.toLowerCase();
+      if (n.endsWith(".zip")) {
+        const JSZip = await loadJSZip();
+        const z = await JSZip.loadAsync(f);
+        for (const name of Object.keys(z.files)) {
+          const e = z.files[name];
+          if (e.dir || name.includes("/") || !name.toLowerCase().endsWith(".csv")) continue;
+          classify(name, parseCSV(await e.async("string")), add);
+        }
+      } else if (n.endsWith(".csv")) classify(f.name, parseCSV(await f.text()), add);
+    }
+    if (!Object.keys(out).length) { ui.imp = "Não encontrei arquivos do Letterboxd (watched, ratings, diary, watchlist ou reviews)."; return render(); }
+    const r = importLB(out); save();
+    const parts = Object.keys(out).map(k => `${k}: ${out[k].length}`).join(" · ");
+    ui.imp = `<b>Importação concluída.</b><ul><li>${r.created} filmes novos (${r.wl} na lista “quero ver”)</li><li>${r.updated} filmes já existentes atualizados</li><li class="muted">Linhas lidas — ${esc(parts)}</li></ul>Agora abram <b>Filmes › Por avaliar</b> para dar a nota de vocês.`;
+    toast("Letterboxd importado");
+  } catch (e) { ui.imp = "Erro na importação: " + esc(e.message || e); }
+  render();
+}
+async function handlePosters(files) {
+  let ok = 0; const miss = [];
+  for (const f of files) {
+    const base = f.name.replace(/\.[^.]+$/, "");
+    const ym = base.match(/\(?\b((?:19|20)\d{2})\b\)?\s*$/), year = ym ? ym[1] : "";
+    const nm = norm(base.replace(/\(?\b(?:19|20)\d{2}\b\)?\s*$/, "")) || norm(base);
+    let cands = S.items.filter(i => norm(i.title) === nm);
+    if (cands.length > 1 && year) cands = cands.filter(i => i.year === year);
+    if (!cands.length) { miss.push(f.name); continue; }
+    try { const d = await resizeImage(f); setImg(cands[0].id, d); ok++; } catch (e) { miss.push(f.name); }
+  }
+  ui.pst = `<b>${ok}</b> imagem(ns) ligada(s).${miss.length ? `<br>Sem correspondência (${miss.length}): ${esc(miss.slice(0, 12).join(", "))}${miss.length > 12 ? "…" : ""}` : ""}`;
+  toast(ok + " imagens adicionadas"); render();
+}
+
+/* ---------- TMDB: busca, descoberta e ficha completa ---------- */
+const TMI = "https://image.tmdb.org/t/p/";
+const tmCache = new Map();
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const TMGENRES = [["28", "Ação"], ["12", "Aventura"], ["16", "Animação"], ["35", "Comédia"], ["80", "Crime"], ["99", "Documentário"], ["18", "Drama"], ["10751", "Família"], ["14", "Fantasia"], ["36", "História"], ["27", "Terror"], ["10402", "Música"], ["9648", "Mistério"], ["10749", "Romance"], ["878", "Ficção científica"], ["53", "Suspense"], ["10752", "Guerra"], ["37", "Faroeste"]];
+const money = n => n ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n) : "";
+const dur = m => m ? ((m >= 60 ? Math.floor(m / 60) + "h " : "") + (m % 60 ? (m % 60) + "min" : "")).trim() : "";
+
+async function tmdbGet(path, params = {}, nocache) {
+  if (!TMDBKEY) throw new Error("Falta a chave da API do TMDB (Ajustes).");
+  const u = new URL("https://api.themoviedb.org/3" + path), o = {};
+  const p = { language: "pt-BR", ...params };
+  Object.entries(p).forEach(([a, b]) => { if (b !== "" && b != null) u.searchParams.set(a, b); });
+  if (TMDBKEY.length > 40) o.headers = { Authorization: "Bearer " + TMDBKEY }; else u.searchParams.set("api_key", TMDBKEY);
+  const key = u.pathname + u.search;
+  if (!nocache && tmCache.has(key)) return tmCache.get(key);
+  const r = await fetch(u.toString(), o);
+  if (!r.ok) throw new Error(r.status === 401 ? "chave inválida (401)" : "o TMDB respondeu " + r.status);
+  const j = await r.json();
+  if (!nocache) { if (tmCache.size > 60) tmCache.delete(tmCache.keys().next().value); tmCache.set(key, j); }
+  return j;
+}
+const tmDetails = id => tmdbGet("/movie/" + id, { append_to_response: "credits,videos,release_dates,watch/providers,keywords,external_ids,images", include_video_language: "pt,en", include_image_language: "pt,en,null" });
+function pickPoster(d) {
+  const ps = (d.images && d.images.posters) || [];
+  const pt = ps.find(p => p.iso_639_1 === "pt");
+  return pt ? pt.file_path : (d.poster_path || (ps[0] && ps[0].file_path) || "");
+}
+function tmShape(d) {
+  const cr = d.credits || {}, crew = cr.crew || [];
+  const names = jobs => [...new Set(crew.filter(c => jobs.includes(c.job)).map(c => c.name))];
+  const rd = ((d.release_dates || {}).results || []).find(r => r.iso_3166_1 === "BR");
+  const rds = rd ? rd.release_dates : [];
+  const cert = (rds.find(x => x.certification) || {}).certification || "";
+  const relBR = ((rds.find(x => x.type === 3) || rds[0] || {}).release_date || "").slice(0, 10);
+  const pr = ((d["watch/providers"] || {}).results || {}).BR || {};
+  const pn = a => (a || []).map(x => x.provider_name);
+  const vids = ((d.videos || {}).results || []).filter(v => v.site === "YouTube");
+  const tr = vids.find(v => v.type === "Trailer" && v.iso_639_1 === "pt") || vids.find(v => v.type === "Trailer") || vids[0];
+  return {
+    id: d.id, overview: d.overview || "", tagline: d.tagline || "", runtime: d.runtime || 0,
+    countries: (d.production_countries || []).map(c => c.name), languages: (d.spoken_languages || []).map(l => l.name || l.english_name),
+    cert, relBR, release: d.release_date || "", vote: d.vote_average || 0, votes: d.vote_count || 0,
+    cast: (cr.cast || []).slice(0, 10).map(c => ({ n: c.name, c: c.character })),
+    writers: names(["Screenplay", "Writer", "Story"]).slice(0, 4), dp: names(["Director of Photography"]).slice(0, 2), music: names(["Original Music Composer"]).slice(0, 2),
+    trailer: tr ? tr.key : "", prov: { flat: pn(pr.flatrate), rent: pn(pr.rent), buy: pn(pr.buy) },
+    collection: d.belongs_to_collection ? d.belongs_to_collection.name : "", imdb: (d.external_ids || {}).imdb_id || d.imdb_id || "",
+    budget: d.budget || 0, revenue: d.revenue || 0, homepage: d.homepage || "",
+    keywords: (((d.keywords || {}).keywords) || []).slice(0, 12).map(k => k.name), at: new Date().toISOString()
+  };
+}
+function tmApply(it, d) {
+  it.tmdbId = d.id; it.tm = tmShape(d);
+  const dir = ((d.credits || {}).crew || []).filter(c => c.job === "Director").map(c => c.name).join(", ");
+  if (dir && !it.director) it.director = dir;
+  if (d.genres && d.genres.length && !it.genre) it.genre = d.genres.map(g => cap(g.name)).join(", ");
+  if (!it.orig && d.original_title) it.orig = d.original_title;
+  if (!it.year && d.release_date) it.year = d.release_date.slice(0, 4);
+  if (!it.edited && d.title && (it.title === it.orig || it.title === d.original_title)) it.title = d.title;
+  return it;
+}
+function tmFind(m) {
+  const y = (m.release_date || "").slice(0, 4);
+  return S.items.find(i => i.kind === "filme" && (i.tmdbId === m.id || (y && i.year === y && (keyOf(i.orig || i.title, y) === keyOf(m.original_title || m.title || "", y) || keyOf(i.title, y) === keyOf(m.title || "", y))))) || null;
+}
+async function tmResolve(it) {
+  if (it.tmdbId) return it.tmdbId;
+  const q = it.orig || it.title;
+  let res = (await tmdbGet("/search/movie", { query: q, year: it.year || "", include_adult: "false" })).results || [];
+  if (!res.length && it.year) res = (await tmdbGet("/search/movie", { query: q, include_adult: "false" })).results || [];
+  const y = parseInt(it.year, 10);
+  const m = res.find(r => !y || Math.abs(parseInt((r.release_date || "0").slice(0, 4), 10) - y) <= 1) || res[0];
+  return m ? m.id : 0;
+}
+async function tmPosterData(d) {
+  const pp = pickPoster(d); if (!pp) return null;
+  try { const blob = await (await fetch(TMI + "w500" + pp)).blob(); return await resizeImage(blob); } catch (e) { return null; }
+}
+async function tmFetchInto(it, wantPoster) {
+  const id = await tmResolve(it); if (!id) return null;
+  const d = await tmDetails(id);
+  tmApply(it, d);
+  return { d, poster: wantPoster ? await tmPosterData(d) : null };
+}
+async function tmAdd(m, status) {
+  const d = await tmDetails(m.id);
+  let it = tmFind(d);
+  if (!it) { it = newItem("filme", { title: d.title || m.title || "", orig: d.original_title || "", year: (d.release_date || "").slice(0, 4), status, src: "tmdb" }); S.items.push(it); }
+  else if (status === "visto" && it.status === "quero") it.status = "visto";
+  if (status === "quero" && it.status === "quero") it.want = true;
+  if (status === "visto" && !it.date) it.date = todayStr();
+  tmApply(it, d);
+  if (!IMG.has(it.id)) { const p = await tmPosterData(d); if (p) setImg(it.id, p); }
+  save();
+  return it;
+}
+
+/* ficha completa (usada no editor e no explorador) */
+function fichaHTML(t, m, click) {
+  const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
+  const chips = a => (a || []).map(x => click ? `<button type="button" class="pchip" data-act="setwhere" data-v="${esc(x)}">${esc(x)}</button>` : `<span class="pchip">${esc(x)}</span>`).join("");
+  const p = t.prov || {};
+  const prov = [p.flat && p.flat.length ? `<div><b>Streaming</b><br>${chips(p.flat)}</div>` : "", p.rent && p.rent.length ? `<div><b>Alugar</b><br>${chips(p.rent)}</div>` : "", p.buy && p.buy.length ? `<div><b>Comprar</b><br>${chips(p.buy)}</div>` : ""].join("");
+  const hp = safeUrl(t.homepage);
+  const links = [t.trailer ? `<a href="https://www.youtube.com/watch?v=${esc(t.trailer)}" target="_blank" rel="noopener">Trailer</a>` : "", t.imdb ? `<a href="https://www.imdb.com/title/${esc(t.imdb)}/" target="_blank" rel="noopener">IMDb</a>` : "", `<a href="https://www.themoviedb.org/movie/${t.id}?language=pt-BR" target="_blank" rel="noopener">TMDB</a>`, hp ? `<a href="${esc(hp)}" target="_blank" rel="noopener">Site oficial</a>` : ""].filter(Boolean).join(" · ");
+  const cert = t.cert ? (t.cert === "L" ? "Livre" : t.cert + " anos") : "";
+  const meta = [m.year, dur(t.runtime), cert, m.genre || ""].filter(Boolean).join(" · ");
+  return `<div class="ficha">${t.tagline ? `<p class="tagl2">“${esc(t.tagline)}”</p>` : ""}${meta ? `<p class="muted" style="font-size:13.5px">${esc(meta)}</p>` : ""}${t.overview ? `<p style="font-size:14.5px;line-height:1.55">${esc(t.overview)}</p>` : ""}
+  <dl>${row("Direção", esc(m.director || ""))}${row("Roteiro", esc((t.writers || []).join(", ")))}${row("Fotografia", esc((t.dp || []).join(", ")))}${row("Trilha", esc((t.music || []).join(", ")))}${row("Elenco", esc((t.cast || []).map(c => c.c ? c.n + " (" + c.c + ")" : c.n).join(" · ")))}${row("Países", esc((t.countries || []).join(", ")))}${row("Idiomas", esc((t.languages || []).join(", ")))}${row("No Brasil", t.relBR ? fmtDate(t.relBR) : "")}${row("Coleção", esc(t.collection || ""))}${row("Nota TMDB", t.votes ? "★ " + fmt(Math.round(t.vote * 10) / 10) + " (" + t.votes.toLocaleString("pt-BR") + " votos)" : "")}${row("Orçamento", money(t.budget))}${row("Bilheteria", money(t.revenue))}${row("Palavras-chave", esc((t.keywords || []).join(", ")))}${row("Links", links)}</dl>
+  ${prov ? `<div><p class="eyebrow" style="margin-bottom:6px">Onde assistir no Brasil</p>${prov}<p class="attr" style="margin-top:4px">Dados de streaming: JustWatch.</p></div>` : ""}</div>`;
+}
+
+/* explorador: busca, em cartaz, em breve, em alta, melhores, para vocês, descobrir, pessoas */
+let TX = null, txT = null;
+const TXTABS = [["buscar", "Buscar"], ["cartaz", "Em cartaz"], ["breve", "Em breve"], ["alta", "Em alta"], ["top", "Mais bem avaliados"], ["voces", "Para vocês"], ["descobrir", "Descobrir"]];
+function openExplorer(tab) {
+  if (!TMDBKEY) { toast("Cole a chave do TMDB em Ajustes para explorar"); go("ajustes", "sec-tmdb"); return; }
+  TX = { tab: tab || "buscar", mode: "filme", q: "", page: 1, total: 1, items: [], loading: false, err: "", detail: null, person: null, f: { genre: "", from: "", to: "", min: "", sort: "popularity.desc", lang: "", stream: "" } };
+  const tmx = $("#tmx");
+  saveFocus(tmx);
+  tmx.hidden = false; document.body.style.overflow = "hidden";
+  drawTX(); txLoad(true);
+  setTimeout(() => tmx.querySelector('[data-act="txclose"]')?.focus(), 20);
+}
+function closeExplorer() { const tmx = $("#tmx"); TX = null; tmx.hidden = true; document.body.style.overflow = $("#modal").hidden ? "" : "hidden"; restoreFocus(tmx); }
+function drawTX() {
+  if (!TX) return;
+  $("#tmx").innerHTML = `<div class="sheet wide"><div class="m-head"><h2>Explorar no TMDB</h2><button type="button" class="x" data-act="txclose" aria-label="Fechar">✕</button></div>
+  <div class="seg" style="margin-bottom:14px">${TXTABS.map(t => `<button type="button" class="chip" data-act="txtab" data-tab="${t[0]}" aria-pressed="${TX.tab === t[0]}">${t[1]}</button>`).join("")}</div>
+  <div id="txbar"></div><div id="txlist"></div>
+  <p class="attr">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. Dados de streaming: JustWatch.</p></div>`;
+  drawTXBar(); drawTXList();
+}
+function drawTXBar() {
+  const el = $("#txbar"); if (!el || !TX) return;
+  const X = TX, f = X.f;
+  const opt = (v, l, cur) => `<option value="${v}" ${String(cur) === String(v) ? "selected" : ""}>${l}</option>`;
+  if (X.tab === "buscar") el.innerHTML = `<div class="seg" style="margin-bottom:10px"><button type="button" class="chip" data-act="txmode" data-mode="filme" aria-pressed="${X.mode === "filme"}">Filmes</button><button type="button" class="chip" data-act="txmode" data-mode="pessoa" aria-pressed="${X.mode === "pessoa"}">Pessoas (direção e elenco)</button></div><input type="search" data-txq="1" value="${esc(X.q)}" placeholder="${X.mode === "pessoa" ? "Nome de um diretor, atriz, ator…" : "Título do filme…"}" aria-label="Buscar no TMDB" style="margin-bottom:16px">`;
+  else if (X.tab === "descobrir") el.innerHTML = `<div class="row2" style="margin-bottom:10px"><div><label class="f" for="tf_g">Gênero</label><select id="tf_g" data-txf="genre">${opt("", "Todos", f.genre)}${TMGENRES.map(g => opt(g[0], g[1], f.genre)).join("")}</select></div><div><label class="f" for="tf_l">Idioma original</label><select id="tf_l" data-txf="lang">${[["", "Qualquer"], ["pt", "Português"], ["en", "Inglês"], ["ja", "Japonês"], ["ko", "Coreano"], ["fr", "Francês"], ["es", "Espanhol"], ["it", "Italiano"], ["de", "Alemão"], ["hi", "Hindi"]].map(o => opt(o[0], o[1], f.lang)).join("")}</select></div></div>
+  <div class="row2" style="margin-bottom:10px"><div><label class="f" for="tf_a">Lançado a partir de</label><input type="text" inputmode="numeric" maxlength="4" id="tf_a" data-txf="from" value="${esc(f.from)}" placeholder="2010"></div><div><label class="f" for="tf_b">Até</label><input type="text" inputmode="numeric" maxlength="4" id="tf_b" data-txf="to" value="${esc(f.to)}" placeholder="2026"></div></div>
+  <div class="row2" style="margin-bottom:10px"><div><label class="f" for="tf_m">Nota mínima</label><select id="tf_m" data-txf="min">${[["", "Qualquer"], ["6", "6"], ["7", "7"], ["7.5", "7,5"], ["8", "8"]].map(o => opt(o[0], o[1], f.min)).join("")}</select></div><div><label class="f" for="tf_s">Ordenar por</label><select id="tf_s" data-txf="sort">${[["popularity.desc", "Popularidade"], ["vote_average.desc", "Maior nota"], ["primary_release_date.desc", "Mais recentes"], ["revenue.desc", "Maior bilheteria"]].map(o => opt(o[0], o[1], f.sort)).join("")}</select></div></div>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-txf="stream" ${f.stream ? "checked" : ""}> Só o que está em streaming no Brasil</label><button type="button" class="btn primary" data-act="txapply" style="margin-bottom:16px">Buscar</button>`;
+  else if (X.tab === "voces") el.innerHTML = `<p class="muted" style="font-size:13.5px;margin-bottom:14px">Filmes parecidos com os que vocês avaliaram com nota alta (7,5 ou mais) e que ainda não estão na lista.</p>`;
+  else if (X.tab === "cartaz") el.innerHTML = `<p class="muted" style="font-size:13.5px;margin-bottom:14px">Em cartaz nos cinemas do Brasil.</p>`;
+  else if (X.tab === "breve") el.innerHTML = `<p class="muted" style="font-size:13.5px;margin-bottom:14px">Próximos lançamentos no Brasil.</p>`;
+  else el.innerHTML = "";
+}
+function txCard(m) {
+  const yr = (m.release_date || "").slice(0, 4), have = tmFind(m);
+  const bd = have ? (have.status === "visto" ? `<span class="have">Visto</span>` : isWant(have) ? `<span class="have">Na lista</span>` : "") : "";
+  const img = m.poster_path ? `<img src="${TMI}w342${m.poster_path}" alt="" loading="lazy" onerror="this.remove()">` : "";
+  const add = (have && (have.status === "visto" || isWant(have))) ? "" : `<button type="button" class="add" data-act="txadd" data-id="${m.id}" data-st="quero" aria-label="Adicionar a Quero ver">${ico("plus", 18)}</button>`;
+  const sub = [yr, m.vote_count ? "★ " + fmt(Math.round(m.vote_average * 10) / 10) : ""].filter(Boolean).join(" · ");
+  return `<div class="txc" role="button" tabindex="0" data-act="txdetail" data-id="${m.id}"><div class="pw">${img}${bd}${add}</div><b>${esc(m.title)}</b><small>${esc(sub)}${m._why ? " · como " + esc(m._why) : ""}</small></div>`;
+}
+function txPersonCard(p) {
+  const img = p.profile_path ? `<img src="${TMI}w185${p.profile_path}" alt="" loading="lazy" onerror="this.remove()">` : "";
+  const dep = p.known_for_department === "Directing" ? "Direção" : p.known_for_department === "Acting" ? "Atuação" : (p.known_for_department || "");
+  const known = (p.known_for || []).map(k => k.title || k.name).filter(Boolean).slice(0, 2).join(", ");
+  return `<div class="txc" role="button" tabindex="0" data-act="txperson" data-id="${p.id}"><div class="pw">${img}</div><b>${esc(p.name)}</b><small>${esc([dep, known].filter(Boolean).join(" · "))}</small></div>`;
+}
+function txDetailHTML() {
+  const D = TX.detail, back = `<button type="button" class="btn sm" data-act="txback">‹ Voltar</button>`;
+  if (D.loading) return back + `<p class="muted" style="margin:18px 0">Carregando a ficha…</p>`;
+  if (D.err) return back + `<div class="warn" style="margin-top:12px">${esc(D.err)}</div>`;
+  const d = D.d, t = tmShape(d), have = tmFind(d);
+  const dir = ((d.credits || {}).crew || []).filter(c => c.job === "Director").map(c => c.name).join(", ");
+  const m = { year: (d.release_date || "").slice(0, 4), director: dir, genre: (d.genres || []).map(g => cap(g.name)).join(", ") };
+  const pp = pickPoster(d), img = pp ? `<img src="${TMI}w342${pp}" alt="" onerror="this.remove()">` : "";
+  const acts = (have && (have.status === "visto" || isWant(have)))
+    ? `<p class="muted" style="font-size:13px">Já está na lista (${have.status === "visto" ? "visto" : "queremos ver"}).</p><button type="button" class="btn" data-act="txedit" data-id="${have.id}">Abrir a ficha de vocês</button>`
+    : `<button type="button" class="btn primary" data-act="txadd" data-id="${d.id}" data-st="quero">Queremos ver</button><button type="button" class="btn" data-act="txadd" data-id="${d.id}" data-st="visto">Já assistimos</button><button type="button" class="btn" data-act="txadd" data-id="${d.id}" data-st="agendar">Programar</button>`;
+  return `${back}<div class="txd"><div class="txp">${img}</div><div class="txi"><h2>${esc(d.title)}</h2>${d.original_title && d.original_title !== d.title ? `<p class="muted" style="font-size:13px">${esc(d.original_title)}</p>` : ""}<div class="btns2">${acts}</div></div></div>${fichaHTML(t, m, false)}`;
+}
+function drawTXList() {
+  const el = $("#txlist"); if (!el || !TX) return;
+  const X = TX;
+  if (X.detail) { el.innerHTML = txDetailHTML(); return; }
+  let h = "";
+  if (X.person) h += `<div class="txhead"><button type="button" class="btn sm" data-act="txback">‹ Voltar</button><div><b style="font-family:var(--serif);font-size:20px">${esc(X.person.name)}</b>${X.person.bio ? `<p class="muted" style="font-size:13px;margin-top:4px">${esc(X.person.bio)}</p>` : ""}</div></div>`;
+  if (X.err) h += `<div class="warn">${esc(X.err)}</div>`;
+  const items = X.person ? X.person.items : X.items, people = X.tab === "buscar" && X.mode === "pessoa" && !X.person;
+  if (items.length) h += `<div class="grid tx">${items.map(m => people ? txPersonCard(m) : txCard(m)).join("")}</div>`;
+  else if (!X.loading && !X.err) h += `<div class="empty"><p class="muted">${X.tab === "buscar" ? (X.mode === "pessoa" ? "Digite o nome de um diretor ou de um ator para ver os filmes." : "Digite o título de um filme para buscar.") : "Nada por aqui."}</p></div>`;
+  if (X.loading) h += `<p class="muted" style="text-align:center;margin:18px 0">Carregando…</p>`;
+  else if (!X.person && X.page < X.total && items.length) h += `<div class="more"><button type="button" class="btn" data-act="txmore">Carregar mais</button></div>`;
+  el.innerHTML = h;
+}
+function txDiscover(pg) {
+  const f = TX.f, p = { page: pg, sort_by: f.sort, include_adult: "false", "vote_count.gte": f.sort.startsWith("vote_average") ? 500 : 100 };
+  if (f.genre) p.with_genres = f.genre;
+  if (f.from) p["primary_release_date.gte"] = f.from + "-01-01";
+  if (f.to) p["primary_release_date.lte"] = f.to + "-12-31";
+  if (f.min) p["vote_average.gte"] = f.min;
+  if (f.lang) p.with_original_language = f.lang;
+  if (f.stream) { p.watch_region = "BR"; p.with_watch_monetization_types = "flatrate"; }
+  return p;
+}
+async function txRecs() {
+  const base = S.items.filter(i => i.kind === "filme" && i.status === "visto" && i.rating != null && i.rating >= 7.5).sort((a, b) => b.rating - a.rating).slice(0, 6);
+  if (!base.length) throw new Error("Avalie alguns filmes com nota 7,5 ou mais para eu sugerir parecidos.");
+  const score = new Map();
+  for (const it of base) {
+    if (!it.tmdbId) { try { it.tmdbId = await tmResolve(it); } catch (e) { } }
+    if (!it.tmdbId) continue;
+    const rr = await tmdbGet("/movie/" + it.tmdbId + "/recommendations", { page: 1 });
+    (rr.results || []).forEach(m => { const e = score.get(m.id) || { m, n: 0, from: [] }; e.n++; e.from.push(it.title); score.set(m.id, e); });
+  }
+  save();
+  const res = [...score.values()].filter(e => !tmFind(e.m)).sort((a, b) => b.n - a.n || b.m.vote_average - a.m.vote_average).slice(0, 40).map(e => ({ ...e.m, _why: e.from.slice(0, 2).join(" e ") }));
+  return { results: res, total_pages: 1 };
+}
+async function txLoad(reset) {
+  const X = TX; if (!X) return;
+  if (reset) { X.page = 1; X.items = []; X.total = 1; X.err = ""; }
+  X.loading = true; drawTXList();
+  try {
+    let r = null; const pg = X.page;
+    switch (X.tab) {
+      case "buscar": if (X.q.trim()) r = await tmdbGet(X.mode === "pessoa" ? "/search/person" : "/search/movie", { query: X.q.trim(), page: pg, include_adult: "false" }); break;
+      case "cartaz": r = await tmdbGet("/movie/now_playing", { region: "BR", page: pg }); break;
+      case "breve": r = await tmdbGet("/movie/upcoming", { region: "BR", page: pg }); break;
+      case "alta": r = await tmdbGet("/trending/movie/week", { page: pg }); break;
+      case "top": r = await tmdbGet("/movie/top_rated", { page: pg }); break;
+      case "voces": r = await txRecs(); break;
+      case "descobrir": r = await tmdbGet("/discover/movie", txDiscover(pg)); break;
+    }
+    if (X !== TX) return;
+    if (r) { X.total = r.total_pages || 1; const seen = new Set(X.items.map(m => m.id)); X.items.push(...(r.results || []).filter(m => !seen.has(m.id))); }
+  } catch (e) { X.err = e.message || String(e); }
+  X.loading = false; if (X === TX) drawTXList();
+}
+async function txOpenDetail(id) {
+  const X = TX; X.detail = { loading: true }; drawTXList();
+  try { const d = await tmDetails(id); if (X !== TX) return; X.detail = { d }; } catch (e) { X.detail = { err: e.message || String(e) }; }
+  if (X === TX) { drawTXList(); const sh = $("#tmx .sheet"); if (sh) sh.scrollTop = 0; }
+}
+async function txOpenPerson(id) {
+  const X = TX; X.detail = null; X.err = ""; X.person = { name: "Carregando…", bio: "", items: [] }; X.loading = true; drawTXList();
+  try {
+    const p = await tmdbGet("/person/" + id, { append_to_response: "movie_credits" });
+    const mc = p.movie_credits || {}, map = new Map();
+    (mc.crew || []).filter(c => c.job === "Director").forEach(c => map.set(c.id, c));
+    (mc.cast || []).forEach(c => { if (!map.has(c.id)) map.set(c.id, c); });
+    const items = [...map.values()].filter(c => c.release_date && c.vote_count >= 20).sort((a, b) => b.vote_count - a.vote_count).slice(0, 60);
+    const bio = p.biography || "";
+    X.person = { name: p.name, bio: bio.slice(0, 320) + (bio.length > 320 ? "…" : ""), items };
+  } catch (e) { X.err = e.message || String(e); X.person = null; }
+  X.loading = false; if (X === TX) drawTXList();
+}
+async function txAddFlow(id, st, btn) {
+  const pool = TX ? (TX.items || []).concat(TX.person ? TX.person.items : []) : [];
+  const m = pool.find(x => x.id === id) || (TX && TX.detail && TX.detail.d && TX.detail.d.id === id ? TX.detail.d : { id });
+  if (btn) btn.disabled = true;
+  try {
+    const it = await tmAdd(m, st === "visto" ? "visto" : "quero");
+    toast(`“${it.title}” ${st === "visto" ? "registrado" : "em Queremos ver"}`);
+    if (st === "visto" || st === "agendar") { closeExplorer(); render(); openEditor(it.id, null, st === "visto" ? { status: "visto" } : { focus: "date" }); return; }
+    if (TX) drawTXList();
+    render();
+  } catch (e) { toast("Não consegui adicionar: " + (e.message || e)); if (btn) btn.disabled = false; }
+}
+async function tmOne() {
+  if (!TMDBKEY) { toast("Cole a chave do TMDB em Ajustes"); return; }
+  readForm(); const it = ED.it;
+  if (!it.title) { toast("Digite o título primeiro"); return; }
+  toast("Buscando no TMDB…");
+  try {
+    const r = await tmFetchInto(it, !ED.preview);
+    if (!r) { toast("Não encontrei esse filme no TMDB"); return; }
+    if (r.poster) { ED.photo = r.poster; ED.preview = r.poster; }
+    drawEditor(); toast("Dados do TMDB carregados");
+  } catch (e) { toast("TMDB: " + (e.message || e)); }
+}
+
+/* importar do TMDB por filtro (gênero, anos, nota...) */
+const imOut = h => { ui.im = h; const e = $("#imOut"); if (e) { e.hidden = false; e.innerHTML = h; } };
+function imCard() {
+  const f = ui.imf, o = (v, l, cur) => `<option value="${v}" ${String(cur) === String(v) ? "selected" : ""}>${l}</option>`;
+  return `<div class="card2" id="sec-imp-tmdb"><h3>Importar do TMDB por filtro</h3><p class="muted" style="font-size:14px">Escolha gênero e faixa de anos, e o app traz os filmes que combinam, cada um com a ficha completa (sinopse, elenco, equipe, onde assistir no Brasil e pôster em português). Eles entram em “Quero ver”. Precisa da chave do TMDB (cartão abaixo).</p>
+  <div class="row2" style="margin-top:12px"><div class="fld"><label class="f" for="im_g">Gênero</label><select id="im_g" data-imf="g">${o("", "Todos", f.g)}${TMGENRES.map(g => o(g[0], g[1], f.g)).join("")}</select></div><div class="fld"><label class="f" for="im_l">Idioma original</label><select id="im_l" data-imf="l">${[["", "Qualquer"], ["pt", "Português"], ["en", "Inglês"], ["ja", "Japonês"], ["ko", "Coreano"], ["fr", "Francês"], ["es", "Espanhol"], ["it", "Italiano"], ["de", "Alemão"], ["hi", "Hindi"]].map(x => o(x[0], x[1], f.l)).join("")}</select></div></div>
+  <div class="row2"><div class="fld"><label class="f" for="im_a">Ano inicial</label><input type="text" inputmode="numeric" maxlength="4" id="im_a" data-imf="a" value="${esc(f.a)}"></div><div class="fld"><label class="f" for="im_b">Ano final</label><input type="text" inputmode="numeric" maxlength="4" id="im_b" data-imf="b" value="${esc(f.b)}"></div></div>
+  <div class="row2"><div class="fld"><label class="f" for="im_v">Mínimo de votos no TMDB</label><select id="im_v" data-imf="v">${[["50", "50"], ["200", "200"], ["500", "500"], ["1000", "1.000"], ["5000", "5.000"]].map(x => o(x[0], x[1], f.v)).join("")}</select></div><div class="fld"><label class="f" for="im_m">Nota mínima</label><select id="im_m" data-imf="m">${[["", "Qualquer"], ["6", "6"], ["6.5", "6,5"], ["7", "7"], ["7.5", "7,5"], ["8", "8"]].map(x => o(x[0], x[1], f.m)).join("")}</select></div></div>
+  <div class="row2"><div class="fld"><label class="f" for="im_n">Quantidade</label><select id="im_n" data-imf="n">${[["100", "Até 100"], ["300", "Até 300"], ["1000", "Até 1.000"], ["all", "Todos (pode demorar)"]].map(x => o(x[0], x[1], f.n)).join("")}</select></div><div class="fld"><label class="f" for="im_s">Ordem</label><select id="im_s" data-imf="s">${[["popularity.desc", "Mais populares"], ["vote_average.desc", "Maior nota"], ["vote_count.desc", "Mais votados"], ["primary_release_date.desc", "Mais recentes"]].map(x => o(x[0], x[1], f.s)).join("")}</select></div></div>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:8px"><input type="checkbox" data-imf="st" ${f.st ? "checked" : ""}> Só o que está em streaming no Brasil</label>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:4px"><input type="checkbox" data-imf="p" ${f.p ? "checked" : ""}> Baixar os pôsteres (ocupa mais espaço no aparelho)</label>
+  <div class="btns"><button class="btn" data-act="imcount">Ver quantos filmes</button><button class="btn primary" data-act="imrun">Importar</button><button class="btn" data-act="imcancel">Parar</button><button class="btn danger" style="border:1px solid var(--danger)" data-act="imundo">Desfazer a última importação</button></div>
+  <div class="out" id="imOut" ${ui.im ? "" : "hidden"}>${ui.im || ""}</div>
+  <p class="attr">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. O TMDB lista no máximo 10.000 resultados por busca.</p></div>`;
+}
+function imParams(page) {
+  const f = ui.imf, p = { page, sort_by: f.s, include_adult: "false", "vote_count.gte": f.v };
+  if (f.g) p.with_genres = f.g;
+  if (f.a) p["primary_release_date.gte"] = f.a + "-01-01";
+  if (f.b) p["primary_release_date.lte"] = f.b + "-12-31";
+  if (f.m) p["vote_average.gte"] = f.m;
+  if (f.l) p.with_original_language = f.l;
+  if (f.st) { p.watch_region = "BR"; p.with_watch_monetization_types = "flatrate"; }
+  return p;
+}
+async function imCount() {
+  if (!TMDBKEY) return imOut("Cole primeiro a chave da API do TMDB (cartão abaixo).");
+  try {
+    const r = await tmdbGet("/discover/movie", imParams(1), true), n = r.total_results || 0;
+    const lim = ui.imf.n === "all" ? n : Math.min(n, parseInt(ui.imf.n, 10));
+    imOut(`<b>${n.toLocaleString("pt-BR")}</b> filmes combinam com o filtro. Vão entrar até <b>${lim.toLocaleString("pt-BR")}</b> (os que já estão na lista são pulados). Tempo estimado: ${Math.max(1, Math.ceil(lim / 300))} min.`);
+  } catch (e) { imOut("Não consegui consultar o TMDB: " + esc(e.message || e)); }
+}
+let imBusy = false, imStop = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function imRun() {
+  if (!TMDBKEY) return imOut("Cole primeiro a chave da API do TMDB (cartão abaixo).");
+  if (imBusy) return;
+  imBusy = true; imStop = false;
+  const limit = ui.imf.n === "all" ? Infinity : parseInt(ui.imf.n, 10), wantPoster = !!ui.imf.p, batch = "imp-" + Date.now();
+  let page = 1, total = 1, skipped = 0, done = 0, fail = 0, posters = 0, idx = 0; const found = [];
+  try {
+    while (!imStop && page <= Math.min(total, 500) && found.length < limit) {
+      const r = await tmdbGet("/discover/movie", imParams(page), true);
+      total = r.total_pages || 1;
+      for (const m of r.results || []) { if (found.length >= limit) break; if (tmFind(m)) skipped++; else if (!found.some(x => x.id === m.id)) found.push(m); }
+      imOut(`Listando… página ${page} de ${Math.min(total, 500)}: ${found.length} novos, ${skipped} já na lista.`);
+      page++;
+    }
+    S.lastImp = batch;
+    const worker = async () => {
+      while (!imStop) {
+        const m = found[idx++]; if (!m) return;
+        for (let t = 0; t < 3; t++) {
+          try {
+            const d = await tmdbGet("/movie/" + m.id, { append_to_response: "credits,videos,release_dates,watch/providers,keywords,external_ids", include_video_language: "pt,en" }, true);
+            const it = newItem("filme", { title: d.title || m.title || "", orig: d.original_title || m.original_title || "", year: (d.release_date || m.release_date || "").slice(0, 4), status: "quero", src: "tmdb", imp: batch });
+            tmApply(it, d); S.items.push(it);
+            const pp = d.poster_path || m.poster_path;
+            if (wantPoster && pp) { try { const blob = await (await fetch(TMI + "w342" + pp)).blob(); setImg(it.id, await resizeImage(blob, 520, 0.72)); posters++; } catch (e) { } }
+            done++; break;
+          } catch (e) { if (t === 2 || /401/.test(e.message || "")) { fail++; break; } await sleep(1200); }
+        }
+        if ((done + fail) % 10 === 0) { imOut(`Importando… ${done + fail} de ${found.length} (${done} ok${fail ? ", " + fail + " com erro" : ""}).`); save(); }
+      }
+    };
+    await Promise.all(Array.from({ length: 5 }, worker));
+    save();
+    imOut(`<b>${imStop ? "Interrompido" : "Concluído"}.</b> ${done} filmes importados com ficha completa${wantPoster ? `, ${posters} pôsteres` : ""}${skipped ? `, ${skipped} já estavam na lista` : ""}${fail ? `, ${fail} com erro` : ""}.`);
+    render();
+  } catch (e) { save(); imOut(`Não consegui continuar (${esc(e.message || e)}). Confira a chave e a conexão.${done ? ` Até aqui: ${done} importados.` : ""}`); }
+  imBusy = false;
+}
+async function imUndo() {
+  const rm = S.items.filter(i => S.lastImp && i.imp === S.lastImp && !i.edited && i.status === "quero");
+  if (!rm.length) return toast("Nada da última importação para desfazer");
+  if (!(await askConfirm(`${rm.length} filmes da última importação (que você não alterou) serão removidos.`, "Desfazer"))) return;
+  const ids = new Set(rm.map(i => i.id)); rm.forEach(i => delImg(i.id));
+  S.items = S.items.filter(i => !ids.has(i.id)); save(); imOut(`${rm.length} filmes removidos.`); render();
+}
+
+/* completar vários filmes de uma vez */
+let tmdbBusy = false;
+async function enrichTMDB(force) {
+  const out = h => { ui.tmdb = h; const e = $("#tmdbOut"); if (e) { e.hidden = false; e.innerHTML = h; } };
+  if (!TMDBKEY) return out("Cole primeiro a chave da API do TMDB.");
+  if (tmdbBusy) return;
+  const todo = S.items.filter(i => i.kind === "filme" && (force || !i.tm || !IMG.has(i.id) || !i.director || !i.genre));
+  if (!todo.length) return out("Todos os filmes já têm a ficha completa. Use “Atualizar tudo” para refazer.");
+  tmdbBusy = true; let ok = 0, posters = 0, miss = 0, n = 0;
+  try {
+    for (const it of todo) {
+      n++; out(`Buscando ${n} de ${todo.length}: ${esc(it.title)}…`);
+      const r = await tmFetchInto(it, !IMG.has(it.id));
+      if (!r) { miss++; continue; }
+      if (r.poster) { setImg(it.id, r.poster); posters++; }
+      ok++; if (n % 10 === 0) save();
+    }
+    save(); out(`<b>Concluído.</b> ${ok} filmes com ficha completa, ${posters} pôsteres em português baixados${miss ? `, ${miss} sem correspondência` : ""}.`); render();
+  } catch (e) {
+    save();
+    out(`Não consegui falar com o TMDB (${esc(e.message || e)}). Confira a chave e a conexão.${ok ? ` Até aqui: ${ok} atualizados.` : ""}`);
+  }
+  tmdbBusy = false;
+}
+
+/* ---------- exportações ---------- */
+async function offerDownload(filename, data) {
+  let dl = null;
+  try { dl = window.claude && (await claude.use("downloads")); } catch (e) { }
+  if (!dl) {
+    try {
+      const blob = new Blob([data], { type: filename.endsWith(".csv") ? "text/csv;charset=utf-8" : "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      toast("Arquivo salvo");
+    } catch (e) { toast("Não foi possível salvar o arquivo"); }
+    return;
+  }
+  try { await dl.save({ filename, data }); toast("Arquivo salvo"); } catch (e) { if (!e || e.code !== "declined") toast("Não foi possível salvar o arquivo"); }
+}
+const exportBackup = () => offerDownload(`nos-dois-backup-${todayStr()}.json`, JSON.stringify({ app: "nos-dois", v: 1, exported: new Date().toISOString(), names: S.names, theme: S.theme, catalogV: S.catalogV, items: S.items, imgs: Object.fromEntries(IMG), atts: Object.fromEntries(ATT) }));
+function exportCSV() {
+  const cols = ["tipo", "titulo", "ano", "situacao", "data", "onde", "nota_casal", "nota_" + S.names[0], "nota_" + S.names[1], "nota_letterboxd", "diretor", "genero", "titulo_original", "duracao_min", "classificacao", "nota_tmdb", "sinopse", "cozinha", "preco", "pratos", "comentarios", "tipo_evento", "cidade", "artistas", "data_fim", "gasto", "ingresso", "melhor_momento"];
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const lines = S.items.map(i => [({ filme: "filme", rest: "restaurante", show: "evento" })[i.kind], i.title, i.year, i.status === "visto" ? "feito" : "quero", i.date, i.where, i.rating, i.ra, i.rb, i.lbRating, i.director, i.genre, i.orig, i.tm ? i.tm.runtime : "", i.tm ? i.tm.cert : "", i.tm ? i.tm.vote : "", i.tm ? i.tm.overview : "", i.cuisine, i.price, i.dishes, i.notes, i.etype, i.city, i.artists, i.dateEnd, i.cost, i.ticket, i.hl].map(q).join(","));
+  offerDownload(`nos-dois-${todayStr()}.csv`, "\uFEFF" + [cols.map(q).join(","), ...lines].join("\r\n"));
+}
+async function restoreBackup(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || j.app !== "nos-dois" || !Array.isArray(j.items)) throw new Error("Arquivo inválido");
+    if (!(await askConfirm(`Isso substitui tudo o que está neste aparelho por ${j.items.length} registros do backup.`, "Restaurar"))) return;
+    S = { v: 1, names: j.names || ["Eu", "Ela"], items: j.items, theme: j.theme || S.theme || "lente", catalogV: 1 }; IMG.clear(); ATT.clear(); syReset();
+    await dbWrite("img", s => s.clear());
+    Object.entries(j.imgs || {}).forEach(([id, d]) => setImg(id, d));
+    Object.entries(j.atts || {}).forEach(([id, d]) => attSave(id, d));
+    applyTheme(S.theme); toast("Backup restaurado");
+  } catch (e) { toast("Não consegui ler esse backup"); }
+}
+
+/* ---------- editor ---------- */
+let ED = null;
+const WHERE_F = ["Cinema", "Em casa", "Netflix", "Prime Video", "Max", "Disney+", "Apple TV+", "Mubi", "Globoplay", "Telecine", "Paramount+"];
+const CUISINES = ["Brasileira", "Italiana", "Japonesa", "Pizzaria", "Hambúrguer", "Árabe", "Francesa", "Mexicana", "Churrascaria", "Café / Padaria", "Contemporânea", "Vegetariana", "Frutos do mar", "Sobremesas"];
+function rateHTML(key, label, val, big) {
+  return `<div class="rate ${big ? "big" : ""}" data-key="${key}" ${val != null ? 'data-set="1"' : ""}><div class="rate-top"><span>${label}</span><b class="rv">${val != null ? fmt(val) : "—"}</b><button type="button" class="link" data-act="clr">limpar</button></div><input type="range" min="0" max="10" step="0.5" value="${val != null ? val : 7}" aria-label="${esc(label)}"></div>`;
+}
+/* nota de vocês dois: só leitura, calculada como a média das notas de cada um */
+function coupleHTML(it) {
+  const val = coupleAvg(it.ra, it.rb) ?? (it.ra == null && it.rb == null ? it.rating : null);
+  const hint = it.ra == null && it.rb == null && it.rating != null ? "nota anterior; ao avaliar, vira a média" : "média das duas notas";
+  return `<div class="rate big" data-key="rating" ${it.rating != null && it.ra == null && it.rb == null ? `data-legacy="${it.rating}"` : ""}><div class="rate-top"><span>Nota de vocês dois <small class="muted" id="rhint">· ${hint}</small></span><b class="rv">${val != null ? fmt(val) : "—"}</b></div></div>`;
+}
+function updCouple() {
+  const g = k => { const r = document.querySelector(`.rate[data-key="${k}"]`); return r && r.dataset.set ? parseFloat(r.querySelector("input").value) : null; };
+  const c = document.querySelector('.rate[data-key="rating"]'); if (!c) return;
+  const a = g("ra"), b = g("rb"), m = coupleAvg(a, b);
+  const val = m ?? (a == null && b == null && c.dataset.legacy ? parseFloat(c.dataset.legacy) : null);
+  c.querySelector(".rv").textContent = val != null ? fmt(val) : "—";
+  const h = $("#rhint"); if (h) h.textContent = "· " + (m != null ? "média das duas notas" : a == null && b == null ? (c.dataset.legacy ? "nota anterior; ao avaliar, vira a média" : "avaliem os dois") : `falta a nota de ${a == null ? S.names[0] : S.names[1]}`);
+}
+function openEditor(id, kind, opts = {}) {
+  const ex = id ? S.items.find(i => i.id === id) : null;
+  const it = ex ? { ...ex, tags: [...(ex.tags || [])] } : newItem(kind, { status: opts.status || "visto", title: opts.title || "", date: opts.date || "", ...(kind === "show" ? { etype: "Show" } : {}) });
+  if (opts.status && ex) { it.status = opts.status; if (opts.status === "visto" && (!it.date || it.date > todayStr())) it.date = todayStr(); }
+  OSMF = null; ED = { id: ex ? ex.id : null, it, photo: undefined, preview: ex ? IMG.get(ex.id) || null : null, isNew: !ex, focus: opts.focus };
+  drawEditor();
+}
+function showFields(it) {
+  return `<div class="row2"><div class="fld"><label class="f" for="f_etype">Tipo</label><select id="f_etype">${ETYPES.map(t => `<option ${it.etype === t ? "selected" : ""}>${t}</option>`).join("")}</select></div><div class="fld"><label class="f" for="f_city">Cidade</label><input type="text" id="f_city" value="${esc(it.city || "")}" placeholder="Curitiba"></div></div>
+  <div class="fld"><label class="f" for="f_artists">Line-up / artistas</label><textarea id="f_artists" rows="2" placeholder="Quem tocou ou vai tocar (separe por vírgula)">${esc(it.artists || "")}</textarea></div>`;
+}
+function drawEditor() {
+  const it = ED.it, isF = it.kind === "filme", isS = it.kind === "show", isR = !isF && !isS, v = it.status === "visto";
+  const wh = [...new Set(S.items.filter(i => i.kind === it.kind && i.where).map(i => i.where))];
+  const whereOpts = [...new Set([...(isF ? WHERE_F : []), ...wh])];
+  const pv = ED.preview ? `<img src="${ED.preview}" alt="">` : "";
+  const m = $("#modal");
+  m.innerHTML = `<form class="sheet" id="f" autocomplete="off" onsubmit="return false">
+  <div class="m-head"><h2>${ED.isNew ? (isF ? "Novo filme" : isS ? "Novo evento" : "Novo restaurante") : "Editar"}</h2><button type="button" class="x" data-act="close" aria-label="Fechar">✕</button></div>
+  ${ED.isNew ? `<div class="kseg"><button type="button" class="chip" data-act="setkind" data-kind="filme" aria-pressed="${isF}">Filme</button><button type="button" class="chip" data-act="setkind" data-kind="rest" aria-pressed="${isR}">Restaurante</button><button type="button" class="chip" data-act="setkind" data-kind="show" aria-pressed="${isS}">Evento</button></div>` : ""}
+  <div class="photo ${isR ? "restp" : ""}"><div class="pv" id="pv">${pv || `<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted)">${ico(kIcon(it.kind), 30)}</span>`}</div><div class="pa"><button type="button" class="btn sm" data-act="pick" data-in="fPh">${ED.preview ? "Trocar foto" : isF ? "Adicionar pôster" : isS ? "Adicionar cartaz ou foto" : "Adicionar foto"}</button>${ED.preview ? '<button type="button" class="link" data-act="rmphoto">remover imagem</button>' : ""}<input type="file" id="fPh" accept="image/*" hidden></div></div>
+  <div class="fld"><label class="f" for="f_title">${isF ? "Título" : isS ? "Nome do evento" : "Nome do restaurante"}</label><input type="text" id="f_title" value="${esc(it.title)}" ${isR && ED.isNew ? 'list="dl-pl" autocomplete="off"' : ""}>${isR && ED.isNew ? `<datalist id="dl-pl">${[...places().values()].slice(0, 1500).map(p => `<option value="${esc(p.title)}" label="${esc(p.where || "")}">`).join("")}</datalist>` : ""}</div>
+  ${isR ? `<div id="osmFind" style="margin:-4px 0 14px">${osmFindInner("ed")}</div>` : ""}
+  ${isR && ED.filled ? `<p class="hintp ok">${esc(ED.filled)}</p>` : isR && ED.isNew ? '<p class="hintp">Já foram a este restaurante? Digite o nome e escolha na lista: cozinha, preço, bairro e horário vêm preenchidos.</p>' : ""}
+  ${isF ? `<div class="fld" style="margin-top:-6px"><button type="button" class="btn sm" data-act="tmone">${ico("search", 15)} Preencher pelo TMDB</button></div>` : ""}
+  ${isS ? showFields(it) : `<div class="row2"><div class="fld">${isF ? `<label class="f" for="f_year">Ano de lançamento</label><input type="text" id="f_year" inputmode="numeric" maxlength="4" value="${esc(it.year)}">` : `<label class="f" for="f_cuisine">Cozinha</label>${cuisineSel(it.cuisine)}`}</div>
+  <div class="fld">${isF ? `<label class="f" for="f_director">Diretor(a)</label><input type="text" id="f_director" value="${esc(it.director)}">` : `<label class="f" for="f_price">Faixa de preço</label><select id="f_price">${["", "R$", "R$$", "R$$$", "R$$$$"].map(p => `<option value="${p}" ${it.price === p ? "selected" : ""}>${p || "—"}</option>`).join("")}</select>`}</div></div>`}
+  ${isF ? `<div class="fld"><label class="f" for="f_genre">Gênero</label><input type="text" id="f_genre" list="dl-g" placeholder="Drama, Romance" value="${esc(it.genre)}"><datalist id="dl-g">${GENRES.map(g => `<option value="${g}">`).join("")}</datalist></div><div class="fld"><label class="f" for="f_orig">Título original</label><input type="text" id="f_orig" value="${esc(it.orig)}"></div>` : ""}
+  ${isR ? `<div class="fld"><label class="f" for="f_hr">Horário de funcionamento</label><input type="text" id="f_hr" value="${esc(it.hr || (it.osm && it.osm.hr) || "")}" placeholder="Seg-Sex 11:00-15:00, 18:00-23:00; Sáb-Dom 12:00-23:00"><p class="hintp" id="hrHint" style="margin:6px 0 0"></p></div>` : ""}
+  ${isR ? osmInfoHTML(it) : ""}
+  <div class="kseg" style="margin-bottom:14px"><button type="button" class="chip" data-act="setst" data-st="visto" aria-pressed="${v}">${isF ? "Já assistimos" : "Já fomos"}</button><button type="button" class="chip" data-act="setst" data-st="quero" aria-pressed="${isF ? (!v && isWant(it)) : !v}">${isF ? "Queremos ver" : isS ? "Queremos ir" : "Quero ir"}</button></div>
+  <div class="row2"><div class="fld"><label class="f" for="f_date" id="l_date">${isS ? "Data (ou primeiro dia)" : v ? (isF ? "Quando assistimos" : "Quando fomos") : "Programado para"}</label><input type="date" id="f_date" value="${esc(it.date)}"></div>
+  <div class="fld"><label class="f" for="f_where" id="l_where">${isF ? (v ? "Onde assistimos" : "Onde vamos assistir") : isS ? "Local / casa de show" : "Bairro / cidade"}</label><input type="text" id="f_where" list="dl-w" value="${esc(it.where)}"><datalist id="dl-w">${whereOpts.map(c => `<option value="${esc(c)}">`).join("")}</datalist></div></div>
+  ${isS ? `<div class="row2"><div class="fld"><label class="f" for="f_dateEnd">Até (último dia, se durar mais de um)</label><input type="date" id="f_dateEnd" value="${esc(it.dateEnd || "")}"></div><div class="fld"><label class="f" for="f_cost">${v ? "Quanto gastamos (R$)" : "Valor previsto (R$)"}</label><input type="text" id="f_cost" inputmode="decimal" placeholder="ex.: 650" value="${esc(it.cost || "")}"></div></div>${v ? "" : `<div class="fld"><label class="f" for="f_ticket">Ingresso</label><select id="f_ticket">${[["", "—"], ["comprado", "Já temos"], ["pendente", "Falta comprar"]].map(o => `<option value="${o[0]}" ${(it.ticket || "") === o[0] ? "selected" : ""}>${o[1]}</option>`).join("")}</select></div>`}` : ""}
+  ${isS ? attFields(it) : ""}
+  <div id="vistoOnly" ${v ? "" : "hidden"}>
+    ${coupleHTML(it)}
+    <div class="row2">${rateHTML("ra", esc(S.names[0]), it.ra)}${rateHTML("rb", esc(S.names[1]), it.rb)}</div>
+    ${isR ? `<div class="fld"><label class="f" for="f_dishes">Pratos que amamos</label><input type="text" id="f_dishes" value="${esc(it.dishes)}"></div>` : ""}${isS ? `<div class="fld"><label class="f" for="f_hl">Melhor momento</label><input type="text" id="f_hl" value="${esc(it.hl || "")}" placeholder="aquele pôr do sol no palco 2…"></div>` : ""}
+  </div>
+  <div class="fld"><label class="f" for="f_notes">Comentários</label><textarea id="f_notes">${esc(it.notes)}</textarea></div>
+  ${it.lbRank ? `<p class="lbnote">Letterboxd, Top 250 dos anos ${esc(it.lbDecade)}: <b>#${it.lbRank}</b></p>` : ""}${it.lbRating || safeUrl(it.lbUri) ? `<p class="lbnote">${it.lbRating ? "Sua nota no Letterboxd: <b>★ " + fmt(it.lbRating) + "</b>" : ""}${safeUrl(it.lbUri) ? ` · <a href="${esc(safeUrl(it.lbUri))}" target="_blank" rel="noopener">abrir no Letterboxd</a>` : ""}</p>` : ""}
+  ${it.tm ? `<details class="fichad" open><summary>Ficha do TMDB</summary>${fichaHTML(it.tm, it, true)}<p class="attr">Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</p></details>` : ""}
+  <div class="acts">${ED.isNew ? "" : '<button type="button" class="btn danger" data-act="del">Excluir</button>'}${isR && !ED.isNew ? `<button type="button" class="btn" data-act="newvisit" data-key="${esc(plKey(it))}">Nova visita</button>` : ""}<span class="grow"></span><button type="button" class="btn" data-act="close">Cancelar</button><button type="button" class="btn primary" data-act="save">Guardar</button></div></form>`;
+  saveFocus(m);
+  m.hidden = false; document.body.style.overflow = "hidden";
+  hrHint();
+  if (ED.focus === "date") setTimeout(() => $("#f_date")?.focus(), 50);
+  else if (ED.isNew) setTimeout(() => $("#f_title")?.focus(), 50);
+  else setTimeout(() => m.querySelector('[data-act="close"]')?.focus(), 50);
+}
+function hrHint() {
+  const e = $("#hrHint"), i = $("#f_hr"); if (!e || !i) return; const v = i.value.trim();
+  if (!v) { e.textContent = "Opcional. Com o horário, as Sugestões sabem se está aberto agora."; return; }
+  const o = ohState(v); e.textContent = o.known ? `Agora: ${o.open ? "aberto até " + o.until : "fechado"} · hoje ${o.today}` : "Não entendi esse formato. Exemplo: Seg-Sex 11:00-15:00, 18:00-23:00; Sáb 12:00-23:00";
+}
+function readForm() {
+  const it = ED.it, g = id => { const e = $("#" + id); return e ? e.value.trim() : ""; };
+  it.title = g("f_title"); it.date = g("f_date"); it.where = g("f_where"); it.notes = g("f_notes");
+  if (it.kind === "filme") { it.year = g("f_year").replace(/\D/g, ""); it.director = g("f_director"); it.genre = g("f_genre"); it.orig = g("f_orig"); } else if (it.kind === "show") { it.etype = g("f_etype") || "Show"; it.city = g("f_city"); it.artists = g("f_artists"); it.dateEnd = g("f_dateEnd"); if (it.dateEnd && (!it.date || it.dateEnd <= it.date)) it.dateEnd = ""; it.cost = g("f_cost"); it.ticket = $("#f_ticket") ? g("f_ticket") : (it.ticket || ""); it.hl = g("f_hl"); } else { it.cuisine = g("f_cuisine"); it.price = g("f_price"); it.dishes = g("f_dishes"); it.hr = g("f_hr"); }
+  ["ra", "rb"].forEach(k => { const r = document.querySelector(`.rate[data-key="${k}"]`); if (r) it[k] = r.dataset.set ? parseFloat(r.querySelector("input").value) : null; });
+  const cm = coupleAvg(it.ra, it.rb);
+  if (cm != null) it.rating = cm; else if (it.ra != null || it.rb != null) it.rating = null; /* só um avaliou: ainda falta a média */
+  return it;
+}
+function closeModal() { const m = $("#modal"); m.hidden = true; document.body.style.overflow = ""; ED = null; attGC(); restoreFocus(m); }
+function saveEditor() {
+  const it = readForm();
+  if (!it.title) { toast("Dê um nome ao registro"); $("#f_title").focus(); return; }
+  if (it.status === "quero") { it.rating = null; it.ra = null; it.rb = null; if (it.kind === "filme" && (it.date || ED.isNew)) it.want = true; }
+  it.edited = true;
+  const prev = ED.id ? S.items.find(x => x.id === ED.id) : null, oldKey = prev && prev.kind === "rest" ? plKey(prev) : null;
+  if (ED.isNew) S.items.push(it); else { const k = S.items.findIndex(x => x.id === ED.id); S.items[k] = it; }
+  if (it.kind === "rest") { /* o restaurante é um só: cozinha, preço e horário valem para todas as visitas */
+    const nk = plKey(it);
+    for (const o of S.items) { if (o.kind !== "rest" || o.id === it.id) continue; const k = plKey(o); if (k !== nk && k !== oldKey) continue;
+      const ch = { cuisine: it.cuisine, price: it.price, hr: it.hr || "" }; if (k === oldKey) { ch.title = it.title; ch.where = it.where; }
+      let d = false; for (const f in ch) if ((o[f] || "") !== (ch[f] || "")) { o[f] = ch[f]; d = true; } if (d) o.edited = true; }
+  }
+  if (typeof ED.photo === "string") setImg(it.id, ED.photo); else if (ED.photo === null && IMG.has(it.id)) delImg(it.id);
+  save(); closeModal(); render(); toast("Guardado");
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click", async e => {
+  if (e.target === $("#modal")) return closeModal();
+  if (e.target === $("#tmx")) return closeExplorer();
+  const t = e.target.closest("[data-act]"); if (!t) return;
+  const a = t.dataset.act, id = t.dataset.id;
+  switch (a) {
+    case "nav": go(t.dataset.sec, t.dataset.to); break;
+    case "add": {
+      const s = ui.sec;
+      if (s === "filmes") openEditor(null, "filme", { status: ui.filmes.st === "quero" ? "quero" : "visto" });
+      else if (s === "rest") openEditor(null, "rest", { status: ui.rest.st === "quero" ? "quero" : "visto" });
+      else if (s === "eventos") openEditor(null, "show", { status: ui.shows.st === "quero" ? "quero" : "visto" });
+      else openEditor(null, "filme", { status: s === "agenda" ? "quero" : "visto" });
+      break;
+    }
+    case "open": openEditor(id); break;
+    case "attopen": openAtt(id, t.dataset.t || null, t.dataset.a); break;
+    case "attrm": readForm(); ED.it.att = (ED.it.att || []).filter(a => a.id !== t.dataset.a); drawEditor(); break;
+    case "avclose": closeAtt(); break;
+    case "avz": avZoom(+t.dataset.z); break;
+    case "avgo": if (AV) { AV.i = +t.dataset.k; AV.z = 1; drawAtt(); } break;
+    case "avretry": drawAtt(); break;
+    case "avshare": attShare(); break;
+    case "agview": ui.ag.view = t.dataset.v; render(); break;
+    case "agnav": {
+      const n = +t.dataset.n, td = todayStr();
+      if (n === 0) { ui.ag.m = td.slice(0, 7); ui.ag.d = td; }
+      else { const [y, m] = (ui.ag.m || td.slice(0, 7)).split("-").map(Number), d = new Date(y, m - 1 + n, 1); ui.ag.m = d.getFullYear() + "-" + pad(d.getMonth() + 1); ui.ag.d = ""; }
+      render(); break;
+    }
+    case "agday": {
+      const d = t.dataset.d; ui.ag.d = ui.ag.d === d ? "" : d; if (d.slice(0, 7) !== ui.ag.m) ui.ag.m = d.slice(0, 7);
+      render(); { const el = $("#agdet"); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } break;
+    }
+    case "agadd": openEditor(null, "filme", { status: "quero", date: t.dataset.d }); break;
+    case "want": {
+      e.stopPropagation();
+      const it = S.items.find(x => x.id === id); if (!it) break;
+      if (isWant(it) && it.date) { toast("Está programado na Agenda. Tire a data para removê-lo daqui."); break; }
+      it.want = !isWant(it); save(); render();
+      toast(it.want ? `“${it.title}” em Queremos ver` : "Tirado de Queremos ver");
+      break;
+    }
+    case "concluir": e.stopPropagation(); openEditor(id, null, { status: "visto" }); break;
+    case "agendar": e.stopPropagation(); openEditor(id, null, { focus: "date" }); break;
+    case "close": closeModal(); break;
+    case "save": saveEditor(); break;
+    case "del": if (await askConfirm("Este registro e a foto serão apagados.", "Excluir")) { syncDelete(ED.id); S.items = S.items.filter(i => i.id !== ED.id); delImg(ED.id); save(); closeModal(); render(); toast("Excluído"); } break;
+    case "setkind": { const title = $("#f_title")?.value || "", st = ED.it.status; openEditor(null, t.dataset.kind, { status: st, title, date: ED.it.date }); break; }
+    case "setst": {
+      readForm(); ED.it.status = t.dataset.st; if (ED.it.kind === "filme" && ED.it.status === "quero") ED.it.want = true;
+      if (ED.it.status === "visto" && (!ED.it.date || ED.it.date > todayStr())) ED.it.date = todayStr();
+      drawEditor(); break;
+    }
+    case "pick": $("#" + t.dataset.in).click(); break;
+    case "rmphoto": ED.photo = null; ED.preview = null; readForm(); drawEditor(); break;
+    case "clr": { const r = t.closest(".rate"); delete r.dataset.set; r.querySelector(".rv").textContent = "—"; updCouple(); break; }
+    case "rsec": ui.rest.sec = t.dataset.s; render(); $("#view").scrollTop = 0; break;
+    case "rkmore": ui.rk.n += 10; render(); break;
+    case "sgmore": ui.sg.n += 12; render(); break;
+    case "sgchip": ui.sg.q = norm(ui.sg.q) === norm(t.dataset.w) ? "" : t.dataset.w; ui.sg.n = 12; render(); break;
+    case "newvisit": { const key = t.dataset.key; if (ED) closeModal(); newVisit(key); break; }
+    case "chip": { const u = ui[t.dataset.k]; u.st = t.dataset.st; u.touched = true; u.n = 60; render(); break; }
+    case "more": { const u = ui[KUI[t.dataset.k]]; u.n += 60; $("#list").innerHTML = listHTML(t.dataset.k); break; }
+    case "torate": { const need = k => S.items.some(i => i.kind === k && i.status === "visto" && i.rating == null); if (need("filme")) { ui.filmes.st = "avaliar"; go("filmes"); } else if (need("rest")) { ui.rest.st = "avaliar"; go("rest"); } else if (need("show")) { ui.shows.st = "avaliar"; go("eventos"); } break; }
+    case "catalog": { const r = loadCatalog(); ui.cat = `<b>${r.created}</b> filmes novos em “Quero ver” e <b>${r.enriched}</b> existentes enriquecidos com diretor, gênero e posição no ranking.`; render(); toast("Catálogo atualizado"); break; }
+    case "catalogrm": { const rm = S.items.filter(i => i.src === "catalogo" && !i.edited && i.status === "quero" && !IMG.has(i.id)); if (!rm.length) { toast("Nada para remover"); break; } if (await askConfirm(`${rm.length} filmes do catálogo que você não alterou serão removidos da lista.`, "Remover")) { const ids = new Set(rm.map(i => i.id)); S.items = S.items.filter(i => !ids.has(i.id)); save(); ui.cat = `${rm.length} itens removidos.`; render(); } break; }
+    case "tmdb": enrichTMDB(false); break;
+    case "tmdball": enrichTMDB(true); break;
+    case "tmone": tmOne(); break;
+    case "imcount": imCount(); break;
+    case "imrun": imRun(); break;
+    case "imcancel": imStop = true; toast("Parando…"); break;
+    case "imundo": imUndo(); break;
+    case "syin": syIn(); break;
+    case "syout": syOut(); break;
+    case "sycreate": syCreate(); break;
+    case "syjoin": syJoin(SY.code); break;
+    case "syinvite": syInvite(); break;
+    case "synow": syncSoon(0); toast("Sincronizando…"); break;
+    case "syretry": SY.loading = null; SY.err = ""; syLoad(); syUi(); break;
+    case "sycopy": try { await navigator.clipboard.writeText(SY.invite.url); toast("Link copiado"); } catch (e) { toast("Copie o link manualmente"); } break;
+    case "osmrun": osmRun(); break;
+    case "osmfind": osmSearch("ed"); break;
+    case "osmsearch": osmSearch("cfg"); break;
+    case "osmpick": osmPick(+t.dataset.i); break;
+    case "osmadd": osmAdd(+t.dataset.i); break;
+    case "osmcancel": osmStop = true; toast("Parando…"); break;
+    case "osmundo": osmUndo(); break;
+    case "setwhere": { const w = $("#f_where"); if (w) w.value = t.dataset.v; break; }
+    case "txopen": openExplorer(t.dataset.tab); break;
+    case "txclose": closeExplorer(); break;
+    case "txtab": TX.tab = t.dataset.tab; TX.detail = null; TX.person = null; drawTX(); txLoad(true); break;
+    case "txmode": TX.mode = t.dataset.mode; TX.detail = null; TX.person = null; drawTX(); txLoad(true); break;
+    case "txapply": TX.detail = null; txLoad(true); break;
+    case "txmore": TX.page++; txLoad(false); break;
+    case "txback": if (TX.detail) TX.detail = null; else TX.person = null; drawTXList(); break;
+    case "txdetail": txOpenDetail(parseInt(id, 10)); break;
+    case "txperson": txOpenPerson(parseInt(id, 10)); break;
+    case "txadd": txAddFlow(parseInt(id, 10), t.dataset.st, t); break;
+    case "txedit": closeExplorer(); openEditor(id); break;
+    case "backup": exportBackup(); break;
+    case "csv": exportCSV(); break;
+    case "wipe": if (await askConfirm("Todos os filmes, restaurantes e fotos deste aparelho serão apagados. Faça um backup antes.", "Apagar tudo")) { S = { v: 1, names: S.names, items: [], theme: S.theme, catalogV: 1 }; IMG.clear(); ATT.clear(); syReset(); await dbWrite("img", s => s.clear()); save(); ui.imp = ui.pst = ""; renderShell(); render(); toast("Tudo apagado"); } break;
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Tab") {
+    const ov = !$("#dlg").hidden ? $("#dlg") : !$("#attv").hidden ? $("#attv") : !$("#tmx").hidden ? $("#tmx") : !$("#modal").hidden ? $("#modal") : null;
+    if (ov) trapTab(e, ov);
+  }
+  if (e.key === "Escape") { if (!$("#dlg").hidden) { $("#dlg").click(); } else if (AV) closeAtt(); else if (TX) closeExplorer(); else if (ED) closeModal(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.matches('.rate input[type="range"]')) {
+    const r = t.closest(".rate"), val = parseFloat(t.value); r.dataset.set = "1"; r.querySelector(".rv").textContent = fmt(val);
+    updCouple();
+  }
+  if (t.dataset.sgq !== undefined) { ui.sg.q = t.value; ui.sg.n = 12; const l = $("#sgl"); if (l) l.innerHTML = sugList(); document.querySelectorAll(".wantchips .chip").forEach(c => c.setAttribute("aria-pressed", String(norm(ui.sg.q) === norm(c.dataset.w)))); return; }
+  if (t.id === "f_hr") { hrHint(); return; }
+  if (t.id === "f_title" && e.inputType === "insertReplacementText") { setTimeout(placeAutofill, 0); return; }
+  if (t.dataset.rbairro !== undefined || t.dataset.rcuis !== undefined) { if (t.dataset.rbairro !== undefined) ui.rest.bairro = t.value; else ui.rest.cuis = t.value; ui.rest.n = 60; $("#list").innerHTML = listHTML("rest"); return; }
+  if (t.dataset.fdir !== undefined || t.dataset.fcast !== undefined) { if (t.dataset.fdir !== undefined) ui.filmes.dir = t.value; else ui.filmes.cast = t.value; ui.filmes.n = 60; $("#list").innerHTML = listHTML("filme"); return; }
+  if (t.dataset.sart !== undefined) { ui.shows.art = t.value; ui.shows.n = 60; $("#list").innerHTML = listHTML("show"); return; }
+  if (t.dataset.txq !== undefined && TX) { TX.q = t.value; clearTimeout(txT); txT = setTimeout(() => { TX.detail = null; TX.person = null; txLoad(true); }, 450); return; }
+  if (t.dataset.q) { const u = ui[t.dataset.q]; u.q = t.value; u.n = 60; $("#list").innerHTML = listHTML(KOF[t.dataset.q]); }
+});
+document.addEventListener("change", async e => {
+  const t = e.target;
+  if (t.dataset.stype !== undefined) { ui.shows.t = t.value; ui.shows.n = 60; $("#list").innerHTML = listHTML("show"); return; }
+  if (t.dataset.syear !== undefined) { ui.shows.y = t.value; ui.shows.n = 60; $("#list").innerHTML = listHTML("show"); return; }
+  if (t.dataset.rk) { ui.rk[t.dataset.rk] = t.value; ui.rk.n = 10; render(); return; }
+  if (t.dataset.sg) { ui.sg[t.dataset.sg] = t.value; ui.sg.n = 12; render(); return; }
+  if (t.id === "f_title" && ED && ED.it.kind === "rest" && ED.isNew) { setTimeout(placeAutofill, 0); return; }
+  if (t.id === "f_hr") { hrHint(); return; }
+  if (t.dataset.genre) { ui.filmes.g = t.value; ui.filmes.n = 60; $("#list").innerHTML = listHTML("filme"); return; }
+  if (t.dataset.sycode !== undefined) { SY.code = t.value; return; }
+  if (t.dataset.osf) { ui.osf[t.dataset.osf] = t.checked ? "1" : ""; return; }
+  if (t.dataset.imf) { ui.imf[t.dataset.imf] = t.type === "checkbox" ? (t.checked ? "1" : "") : t.value.trim(); return; }
+  if (t.dataset.txf && TX) { TX.f[t.dataset.txf] = t.type === "checkbox" ? (t.checked ? "1" : "") : t.value; return; }
+  if (t.id === "tkey") { TMDBKEY = t.value.trim(); dbWrite("kv", st => st.put(TMDBKEY, "tmdbKey")); return; }
+  if (t.dataset.sort) { const u = ui[t.dataset.sort]; u.sort = t.value; u.n = 60; $("#list").innerHTML = listHTML(KOF[t.dataset.sort]); return; }
+  if (t.id === "nA" || t.id === "nB") { S.names = [$("#nA").value.trim() || "Eu", $("#nB").value.trim() || "Ela"]; save(); renderShell(); return; }
+  if (t.dataset.att && t.files && t.files.length && ED) {
+    const ty = t.dataset.att; readForm();
+    for (const f of [...t.files]) {
+      try { const r = await attRead(f, ty); const a = { id: uid(), t: ty, n: (f.name || "").replace(/\.[^.]+$/, "").slice(0, 40) || (ty === "lineup" ? "Line-up" : "Ingresso"), m: r.m, c: Math.ceil(r.d.length / ACH) }; attSave(a.id, r.d); ED.it.att = [...(ED.it.att || []), a]; if (r.m === "application/pdf") warmPdf(); } catch (err) { toast((err && err.message) || "Não consegui anexar"); }
+    }
+    t.value = ""; drawEditor(); return;
+  }
+  if (!t.files || !t.files.length) return;
+  const files = [...t.files]; t.value = "";
+  if (t.id === "fLB") { ui.imp = "Importando…"; render(); await handleImport(files); }
+  else if (t.id === "fPst") { ui.pst = "Processando imagens…"; render(); await handlePosters(files); }
+  else if (t.id === "fRs") await restoreBackup(files[0]);
+  else if (t.id === "fPh") {
+    try { readForm(); const d = await resizeImage(files[0]); ED.photo = d; ED.preview = d; drawEditor(); } catch (err) { toast("Não consegui ler essa imagem"); }
+  }
+});
+
+/* ---------- início ---------- */
+(async function init() {
+  await loadAll();
+  if (S.items.some(i => (i.att || []).some(a => a.m === "application/pdf"))) setTimeout(warmPdf, 2500);
+  let cat = null;
+  if (!S.catalogV) cat = loadCatalog();
+  applyTheme();
+  syBoot();
+  if (cat) setTimeout(() => toast(`Catálogo carregado: ${cat.created} filmes em “Quero ver”`), 700);
+})();
