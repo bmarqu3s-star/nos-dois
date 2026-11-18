@@ -1,0 +1,14 @@
+{
+  "name": "nos-dois",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nós Dois — diário a dois de filmes e restaurantes (PWA no Firebase Hosting, plano Spark)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && npx http-server public -p 5173 -c-1",
+    "login": "npx firebase-tools login",
+    "projeto": "npx firebase-tools use --add",
+    "deploy": "node scripts/build.mjs && npx firebase-tools deploy --only hosting,firestore:rules --project nos-dois-87ec5",
+    "deploy:site": "node scripts/build.mjs && npx firebase-tools deploy --only hosting --project nos-dois-87ec5"
+  }
+}
