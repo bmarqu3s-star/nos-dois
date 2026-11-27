@@ -1,5 +1,5 @@
 /* Nós Dois — service worker. A versão do cache é carimbada pelo build (scripts/build.mjs). */
-const VERSION = "nos-dois-a896a39bde";
+const VERSION = "nos-dois-715a476c47";
 const EXT = "nos-dois-externos";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "favicon.svg", "icons/icon-192.png", "icons/icon-512.png"];
 
@@ -16,8 +16,8 @@ self.addEventListener("fetch", e => {
   const r = e.request;
   if (r.method !== "GET") return;
   const u = new URL(r.url);
-  if (u.origin === location.origin && u.pathname.includes("/vendor/")) {
-    // bibliotecas locais (leitor de PDF): ficam guardadas para abrir ingressos sem internet
+  if (u.origin === location.origin && (u.pathname.includes("/vendor/") || u.pathname.endsWith("/catalog.json"))) {
+    // bibliotecas locais (leitor de PDF) e catálogo sob demanda: ficam guardados para uso sem internet
     e.respondWith(caches.open(EXT).then(async c => { const hit = await c.match(r); if (hit) return hit; const x = await fetch(r); if (x && x.ok) c.put(r, x.clone()); return x; }));
     return;
   }

@@ -177,7 +177,106 @@ export function fillMissing(r, dup) {
   ["ra", "rb", "rating", "date", "where", "notes", "dishes", "price"].forEach(k => { if (empty(r[k]) && !empty(dup[k])) r[k] = dup[k]; });
   if (dup.status === "visto" && r.status === "quero") r.status = "visto";
   if ((dup.att || []).length) r.att = [...(r.att || []), ...dup.att.filter(x => !(r.att || []).some(y => y.id === x.id))];
+  if ((dup.rewatches || []).length) {
+    const have = new Set((r.rewatches || []).map(x => (x.date || "") + "|" + (x.where || "")));
+    r.rewatches = [...(r.rewatches || []), ...dup.rewatches.filter(x => !have.has((x.date || "") + "|" + (x.where || "")))];
+  }
   return coupleSync(r);
+}
+
+export const GENRES = ["Ação", "Animação", "Aventura", "Comédia", "Crime", "Drama", "Família", "Fantasia", "Faroeste", "Ficção científica", "Guerra", "História", "Mistério", "Música", "Romance", "Suspense", "Terror"];
+
+export function classifyLB(name, rows, add) {
+  const n = String(name || "").toLowerCase(), h = (rows && rows[0]) || {};
+  let k = null;
+  if (n.includes("watchlist")) k = "watchlist";
+  else if (n.includes("diary")) k = "diary";
+  else if (n.includes("ratings")) k = "ratings";
+  else if (n.includes("reviews")) k = "reviews";
+  else if (n.includes("watched")) k = "watched";
+  else if ("watched date" in h) k = "diary";
+  else if ("review" in h) k = "reviews";
+  else if ("rating" in h && "name" in h) k = "ratings";
+  if (k && rows && rows.length) add(k, rows);
+  return k;
+}
+
+export function importLBItems(items, d, makeItem) {
+  const idx = new Map();
+  items.filter(i => i.kind === "filme").forEach(i => {
+    idx.set(keyOf(i.title, i.year), i);
+    if (i.orig) idx.set(keyOf(i.orig, i.year), i);
+  });
+  const touched = new Set();
+  let created = 0, wl = 0;
+  const get = (r, status) => {
+    const title = (r.name || "").trim();
+    if (!title) return null;
+    const year = (r.year || "").trim(), k = keyOf(title, year);
+    let it = idx.get(k);
+    if (!it) {
+      it = makeItem("filme", { title, year, status, want: status === "quero", src: "letterboxd", orig: title, lbUri: r["letterboxd uri"] || "" });
+      items.push(it); idx.set(k, it); created++;
+      if (status === "quero") wl++;
+    } else {
+      touched.add(it.id);
+      if (!it.lbUri && r["letterboxd uri"]) it.lbUri = r["letterboxd uri"];
+    }
+    return it;
+  };
+  (d.watchlist || []).forEach(r => get(r, "quero"));
+  (d.watched || []).forEach(r => { const it = get(r, "visto"); if (it && it.status === "quero") it.status = "visto"; });
+  (d.ratings || []).forEach(r => { const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto"; const n = parseFloat(r.rating); if (n) it.lbRating = n; });
+  const last = {};
+  (d.diary || []).forEach(r => {
+    const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto";
+    const n = parseFloat(r.rating); if (n) it.lbRating = n;
+    const wd = r["watched date"] || r.date;
+    if (wd && (!last[it.id] || wd > last[it.id])) last[it.id] = wd;
+    if (r.tags) it.tags = [...new Set([...(it.tags || []), ...r.tags.split(/[,;]/).map(x => x.trim()).filter(Boolean)])];
+  });
+  Object.keys(last).forEach(id => { const it = items.find(x => x.id === id); if (it && (!it.date || !it.edited)) it.date = last[id]; });
+  (d.reviews || []).forEach(r => {
+    const it = get(r, "visto"); if (!it) return; if (it.status === "quero") it.status = "visto";
+    const n = parseFloat(r.rating); if (n && !it.lbRating) it.lbRating = n;
+    if (!it.notes && r.review) it.notes = stripHtml(r.review);
+  });
+  return { created, updated: touched.size, wl, touchedIds: [...touched] };
+}
+
+export function mergeSyncItem(items, id, docData, sigMap) {
+  const byId = new Map(items.map(i => [i.id, i]));
+  const loc = byId.get(id);
+  if (docData.del) {
+    if (!loc) { delete sigMap[id]; return { changed: false, removedId: null, mergedDupId: null }; }
+    const idx = items.indexOf(loc);
+    if (idx >= 0) items.splice(idx, 1);
+    delete sigMap[id];
+    return { changed: true, removedId: id, mergedDupId: null };
+  }
+  let it;
+  try { it = typeof docData.j === "string" ? JSON.parse(docData.j) : docData.j; } catch (e) { return { changed: false, removedId: null, mergedDupId: null }; }
+  if (!it || typeof it !== "object") return { changed: false, removedId: null, mergedDupId: null };
+  coupleSync(it);
+  const s0 = sigOf(it);
+  if (loc) {
+    if (sigMap[id] === undefined || sigOf(loc) !== sigMap[id]) return { changed: false, removedId: null, mergedDupId: null };
+    items[items.indexOf(loc)] = it;
+    sigMap[id] = s0;
+    return { changed: true, removedId: null, mergedDupId: null, item: it };
+  }
+  const k = idKey(it);
+  const dup = items.find(i => sigMap[i.id] === undefined && idKey(i) === k);
+  let mergedDupId = null;
+  if (dup) {
+    fillMissing(it, dup);
+    const di = items.indexOf(dup);
+    if (di >= 0) items.splice(di, 1);
+    mergedDupId = dup.id;
+  }
+  items.push(it);
+  sigMap[id] = s0;
+  return { changed: true, removedId: null, mergedDupId, item: it };
 }
 
 export const OSM_CUIS = { pizza: "Pizzaria", italian: "Italiana", pasta: "Italiana", japanese: "Japonesa", sushi: "Japonesa", ramen: "Japonesa", burger: "Hambúrguer", brazilian: "Brasileira", regional: "Brasileira", steak_house: "Churrascaria", barbecue: "Churrascaria", churrasco: "Churrascaria", grill: "Churrascaria", arab: "Árabe", lebanese: "Árabe", kebab: "Árabe", middle_eastern: "Árabe", french: "Francesa", mexican: "Mexicana", coffee_shop: "Café / Padaria", cafe: "Café / Padaria", bakery: "Café / Padaria", vegetarian: "Vegetariana", vegan: "Vegetariana", seafood: "Frutos do mar", fish: "Frutos do mar", ice_cream: "Sorveteria", dessert: "Sobremesas", chinese: "Chinesa", thai: "Tailandesa", german: "Alemã", portuguese: "Portuguesa", spanish: "Espanhola", indian: "Indiana", korean: "Coreana", peruvian: "Peruana", argentinian: "Argentina", sandwich: "Lanches", fast_food: "Fast-food", chicken: "Frango", international: "Internacional", contemporary: "Contemporânea", ukrainian: "Ucraniana", polish: "Polonesa", asian: "Asiática", juice: "Sucos", pub: "Pub", bar: "Bar", diner: "Lanchonete", buffet: "Self-service", pastel: "Pastelaria", crepe: "Crepes", salad: "Saladas", steak: "Carnes", pancake: "Panquecas", tea: "Chá", beer: "Cervejaria" };
@@ -212,3 +311,109 @@ export function osmFlags(t) {
   if (y("microbrewery") || y("brewery")) f.push("Cervejaria");
   return f;
 }
+
+export function osmExtraTags(t) {
+  const out = {};
+  const im = (t.image || "").trim();
+  const wc = (t.wikimedia_commons || "").trim();
+  const wd = (t.wikidata || "").trim();
+  if (im) out.im = im;
+  if (wc) out.wc = wc;
+  if (/^Q\d+$/i.test(wd)) out.wd = wd.toUpperCase();
+  return out;
+}
+
+export function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371, rad = x => x * Math.PI / 180;
+  const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+export function itemDates(i) {
+  const out = [];
+  if (i.date) {
+    let ds = i.date, n = 0;
+    do {
+      out.push(ds);
+      const dd = toDate(ds); dd.setDate(dd.getDate() + 1); ds = isoDate(dd);
+    } while (i.dateEnd && ds <= i.dateEnd && ++n < 14);
+  }
+  if (i.kind === "filme" && Array.isArray(i.rewatches)) {
+    for (const rw of i.rewatches) if (rw && rw.date && !out.includes(rw.date)) out.push(rw.date);
+  }
+  return out;
+}
+
+export function buildICS(it) {
+  if (!it || !it.date) return "";
+  const escIcs = s => String(s || "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const ymd = s => s.replace(/-/g, "");
+  const endBase = toDate(it.dateEnd && it.dateEnd > it.date ? it.dateEnd : it.date);
+  endBase.setDate(endBase.getDate() + 1);
+  const dtStart = ymd(it.date), dtEnd = ymd(isoDate(endBase));
+  const now = new Date();
+  const stamp = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + "T" + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + "Z";
+  const prefix = it.kind === "filme" ? "🎬 " : it.kind === "rest" ? "🍽️ " : "🎵 ";
+  const loc = [it.where, it.city, it.osm && it.osm.ad].filter(Boolean).join(" — ");
+  const desc = [KNAME[it.kind] || "", it.etype || "", it.artists ? "Line-up: " + it.artists : "", it.notes || ""].filter(Boolean).join("\n");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Nos Dois//PWA//PT",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    "UID:" + (it.id || "ev") + "@nos-dois",
+    "DTSTAMP:" + stamp,
+    "DTSTART;VALUE=DATE:" + dtStart,
+    "DTEND;VALUE=DATE:" + dtEnd,
+    "SUMMARY:" + escIcs(prefix + (it.title || "Programa a dois")),
+    loc ? "LOCATION:" + escIcs(loc) : "",
+    desc ? "DESCRIPTION:" + escIcs(desc) : "",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].filter(Boolean);
+  return lines.join("\r\n") + "\r\n";
+}
+
+export function computeRetro(items, year) {
+  const y = String(year || "");
+  const inYear = i => i.status === "visto" && ((i.date || "").slice(0, 4) === y);
+  const films = items.filter(i => i.kind === "filme" && inYear(i));
+  const rewatches = [];
+  for (const i of items) {
+    if (i.kind !== "filme" || !Array.isArray(i.rewatches)) continue;
+    for (const rw of i.rewatches) if (rw && (rw.date || "").slice(0, 4) === y) rewatches.push({ item: i, rw });
+  }
+  const rests = items.filter(i => i.kind === "rest" && inYear(i));
+  const shows = items.filter(i => i.kind === "show" && inYear(i));
+  const all = [...films, ...rests, ...shows];
+  const raVals = all.filter(i => i.ra != null).map(i => i.ra);
+  const rbVals = all.filter(i => i.rb != null).map(i => i.rb);
+  const cVals = all.filter(i => i.rating != null).map(i => i.rating);
+  const both = all.filter(i => i.ra != null && i.rb != null);
+  const diffs = both.map(i => ({ item: i, diff: Math.abs(i.ra - i.rb) }));
+  const syntony = diffs.length ? Math.max(0, Math.round(100 - avg(diffs.map(d => d.diff)) * 10)) : null;
+  const exactMatches = diffs.filter(d => d.diff === 0).length;
+  const closeMatches = diffs.filter(d => d.diff <= 0.5).length;
+  const agreed = diffs.filter(d => d.diff <= 0.5).sort((a, b) => (b.item.rating ?? 0) - (a.item.rating ?? 0)).slice(0, 3).map(d => d.item);
+  const diverged = diffs.filter(d => d.diff >= 1).sort((a, b) => b.diff - a.diff || (b.item.rating ?? 0) - (a.item.rating ?? 0)).slice(0, 3);
+  const countMap = list => {
+    const m = new Map();
+    for (const x of list) if (x) m.set(x, (m.get(x) || 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR")).slice(0, 5);
+  };
+  const topGenres = countMap(films.flatMap(i => (i.genre || "").split(",").map(x => x.trim()).filter(Boolean)));
+  const topCuisines = countMap(rests.flatMap(i => (i.cuisine || "").split(",").map(x => x.trim()).filter(Boolean)));
+  const showSpend = shows.reduce((t, i) => t + costN(i), 0);
+  const bestItem = all.filter(i => i.rating != null).sort((a, b) => b.rating - a.rating)[0] || null;
+  return {
+    year: y,
+    counts: { filmes: films.length, rewatches: rewatches.length, rest: rests.length, shows: shows.length, total: all.length + rewatches.length },
+    avgA: avg(raVals), avgB: avg(rbVals), avgCouple: avg(cVals),
+    bothCount: both.length, syntony, exactMatches, closeMatches,
+    agreed, diverged, topGenres, topCuisines, showSpend, bestItem
+  };
+}
+
